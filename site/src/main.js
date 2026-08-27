@@ -2,7 +2,7 @@ import './styles.css';
 import { assessRoute, recipes } from './data.js';
 
 const slug = 'photo-edit-ledger';
-const apiBase = 'https://pilot-api.sociobot.in/api/v1';
+const apiBase = 'https://api.sociobot.in/api/v1';
 const licenseKey = `sb_license:${slug}`;
 const verdictKey = `${licenseKey}:verdict`;
 const day = 86_400_000;

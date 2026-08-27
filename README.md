@@ -10,16 +10,24 @@ upload any image or metadata. Scans do not change source files or timestamps.
 
 ## Install
 
-Build the single binary with a current stable Rust toolchain:
+The crate is not yet published on crates.io. Install the current public source
+with a current stable Rust toolchain:
 
 ```sh
-cargo install --path .
+cargo install --git https://github.com/B-Divyesh/sf-photo-edit-ledger.git --locked
+sidecar-ledger --help
+```
+
+For a checkout you already have locally:
+
+```sh
+cargo install --path . --locked
 sidecar-ledger --help
 ```
 
 Prebuilt release artifacts can be placed anywhere on your `PATH` when the
-factory publishes them. The crate starts at `0.1.0` and is ready for
-`cargo package`; registry publishing is intentionally left to the factory.
+factory publishes them. The crate starts at `0.1.0`; registry publishing is
+intentionally left to the factory after `cargo package --locked` review.
 
 ## Usage
 

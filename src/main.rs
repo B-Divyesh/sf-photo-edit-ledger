@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, error::ErrorKind};
 use serde::Serialize;
 use sidecar_ledger::{ScanOptions, Tool, render_human, scan};
 use std::fs::OpenOptions;
@@ -48,7 +48,17 @@ struct ToolDescription {
 }
 
 fn main() -> ExitCode {
-    let cli = Cli::parse();
+    let cli = match Cli::try_parse() {
+        Ok(cli) => cli,
+        Err(error) => {
+            let code = match error.kind() {
+                ErrorKind::DisplayHelp | ErrorKind::DisplayVersion => ExitCode::SUCCESS,
+                _ => ExitCode::from(1),
+            };
+            error.print().expect("write clap diagnostic");
+            return code;
+        }
+    };
     match run(cli) {
         Ok(code) => code,
         Err(error) => {

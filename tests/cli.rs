@@ -80,3 +80,20 @@ fn output_never_overwrites_an_existing_report() {
     assert_eq!(output.status.code(), Some(1));
     assert_eq!(std::fs::read_to_string(report).unwrap(), "keep me");
 }
+
+#[test]
+fn invalid_profile_is_invalid_input_exit_one_as_documented() {
+    let output = binary()
+        .args([
+            "scan",
+            "tests/fixtures/catalog",
+            "--from",
+            "not-a-tool",
+            "--to",
+            "immich",
+        ])
+        .output()
+        .unwrap();
+    assert_eq!(output.status.code(), Some(1));
+    assert!(String::from_utf8_lossy(&output.stderr).contains("invalid value"));
+}

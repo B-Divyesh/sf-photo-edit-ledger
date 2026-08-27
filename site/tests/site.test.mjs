@@ -27,3 +27,18 @@ test('generic XMP keeps standard fields and marks adjustments unknown', () => {
   assert.equal(report.fields.find((field) => field.key === 'rating').state, 'portable');
   assert.equal(report.fields.find((field) => field.key === 'adjustments').state, 'unknown');
 });
+
+test('public install and billing routes are usable production routes', async () => {
+  const [home, client, config] = await Promise.all([
+    readFile(new URL('../index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../src/main.js', import.meta.url), 'utf8'),
+    readFile(new URL('../public/staticwebapp.config.json', import.meta.url), 'utf8')
+  ]);
+  const liveApi = 'https://api.sociobot.in/api/v1';
+  assert.match(home, /cargo install --git https:\/\/github\.com\/B-Divyesh\/sf-photo-edit-ledger\.git --locked/);
+  assert.doesNotMatch(home, /cargo install sidecar-ledger/);
+  assert.match(home, new RegExp(`${liveApi}/products/photo-edit-ledger/checkout`));
+  assert.match(client, new RegExp(`const apiBase = '${liveApi}'`));
+  assert.match(config, /https:\/\/api\.sociobot\.in/);
+  for (const value of [home, client, config]) assert.doesNotMatch(value, /pilot-api\.sociobot\.in/);
+});

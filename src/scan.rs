@@ -68,6 +68,29 @@ struct XmpSummary {
     namespaces: BTreeSet<String>,
 }
 
+#[derive(Clone, Debug, Default)]
+struct NamespaceScope {
+    prefixes: BTreeMap<String, String>,
+    default: Option<String>,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+struct QualifiedName {
+    namespace: Option<String>,
+    local: String,
+    prefix: Option<String>,
+}
+
+const DC_NAMESPACE: &str = "http://purl.org/dc/elements/1.1/";
+const XMP_NAMESPACE: &str = "http://ns.adobe.com/xap/1.0/";
+const LIGHTROOM_NAMESPACE: &str = "http://ns.adobe.com/lightroom/1.0/";
+const CAMERA_RAW_NAMESPACE: &str = "http://ns.adobe.com/camera-raw-settings/1.0/";
+const DARKTABLE_NAMESPACES: &[&str] = &["http://darktable.sf.net/", "http://darktable.org/"];
+const SNAPSEED_NAMESPACES: &[&str] = &[
+    "http://snapseed.com/1.0/",
+    "http://ns.google.com/photos/1.0/",
+];
+
 pub fn scan(options: &ScanOptions) -> io::Result<Manifest> {
     let metadata = fs::metadata(&options.root)?;
     if !metadata.is_dir() {
@@ -87,7 +110,14 @@ pub fn scan(options: &ScanOptions) -> io::Result<Manifest> {
         .filter(|p| extension(p).as_deref() == Some("xmp"))
         .cloned()
         .collect();
-    let sidecar_set: BTreeSet<PathBuf> = sidecars.iter().cloned().collect();
+    let mut sidecar_set = BTreeMap::new();
+    for sidecar in &sidecars {
+        // XMP discovery is case-insensitive, so pairing must be too. Keep the
+        // sorted first path if a case-sensitive filesystem contains duplicates.
+        sidecar_set
+            .entry(path_key(sidecar))
+            .or_insert_with(|| sidecar.clone());
+    }
     let mut used_sidecars = BTreeSet::new();
     let mut assets = Vec::new();
     let mut errors = Vec::new();
@@ -97,7 +127,7 @@ pub fn scan(options: &ScanOptions) -> io::Result<Manifest> {
     for image in &images {
         let sidecar = sidecar_candidates(image)
             .into_iter()
-            .find(|p| sidecar_set.contains(p));
+            .find_map(|candidate| sidecar_set.get(&path_key(&candidate)).cloned());
         let mut fields = Vec::new();
         let mut namespaces = Vec::new();
         if let Some(path) = &sidecar {
@@ -294,6 +324,10 @@ fn sidecar_candidates(image: &Path) -> [PathBuf; 2] {
     ]
 }
 
+fn path_key(path: &Path) -> String {
+    path.to_string_lossy().to_ascii_lowercase()
+}
+
 fn relative(root: &Path, path: &Path) -> String {
     path.strip_prefix(root)
         .unwrap_or(path)
@@ -306,42 +340,53 @@ fn parse_xmp(path: &Path) -> Result<XmpSummary, Box<dyn std::error::Error>> {
     reader.config_mut().trim_text(true);
     let mut buffer = Vec::new();
     let mut summary = XmpSummary::default();
-    let mut ancestors: Vec<String> = Vec::new();
+    let mut scopes = vec![NamespaceScope::default()];
+    let mut elements = Vec::new();
 
     loop {
         match reader.read_event_into(&mut buffer)? {
             Event::Start(event) => {
                 let name = String::from_utf8_lossy(event.name().as_ref()).into_owned();
-                inspect_name(&name, &mut summary);
-                for attribute in event.attributes().with_checks(false).flatten() {
-                    let attr = String::from_utf8_lossy(attribute.key.as_ref());
-                    inspect_name(&attr, &mut summary);
-                }
-                ancestors.push(local_name(&name).to_ascii_lowercase());
+                let scope = namespace_scope(scopes.last().expect("base namespace scope"), &event)?;
+                let element = resolve_name(&name, &scope, false);
+                inspect_name(&element, &mut summary);
+                inspect_attributes(&event, &scope, &mut summary)?;
+                scopes.push(scope);
+                elements.push(element);
             }
             Event::Empty(event) => {
                 let name = String::from_utf8_lossy(event.name().as_ref()).into_owned();
-                inspect_name(&name, &mut summary);
-                for attribute in event.attributes().with_checks(false).flatten() {
-                    let attr = String::from_utf8_lossy(attribute.key.as_ref());
-                    inspect_name(&attr, &mut summary);
-                }
+                let scope = namespace_scope(scopes.last().expect("base namespace scope"), &event)?;
+                inspect_name(&resolve_name(&name, &scope, false), &mut summary);
+                inspect_attributes(&event, &scope, &mut summary)?;
             }
-            Event::Text(text) if !text.as_ref().is_empty() => {
-                if ancestors.iter().any(|a| a == "description") {
-                    summary.fields.insert(FieldKind::Description);
+            Event::End(event) => {
+                let name = String::from_utf8_lossy(event.name().as_ref()).into_owned();
+                let closing = resolve_name(
+                    &name,
+                    scopes.last().expect("namespace scope for open element"),
+                    false,
+                );
+                let opening = elements
+                    .pop()
+                    .ok_or_else(|| malformed_xmp("closing tag without an opening tag"))?;
+                if opening != closing {
+                    return Err(malformed_xmp(format!(
+                        "mismatched closing tag: expected </{}> but found </{}>",
+                        opening.local, closing.local
+                    )));
                 }
-                if ancestors
-                    .iter()
-                    .any(|a| a == "subject" || a == "hierarchicalsubject")
-                {
-                    summary.fields.insert(FieldKind::Keywords);
+                scopes.pop();
+            }
+            Event::Eof => {
+                if !elements.is_empty() {
+                    return Err(malformed_xmp(format!(
+                        "unexpected end of document with {} unclosed element(s)",
+                        elements.len()
+                    )));
                 }
+                break;
             }
-            Event::End(_) => {
-                ancestors.pop();
-            }
-            Event::Eof => break,
             _ => {}
         }
         buffer.clear();
@@ -349,33 +394,105 @@ fn parse_xmp(path: &Path) -> Result<XmpSummary, Box<dyn std::error::Error>> {
     Ok(summary)
 }
 
-fn inspect_name(name: &str, summary: &mut XmpSummary) {
-    let local = local_name(name).to_ascii_lowercase();
-    match local.as_str() {
-        "rating" => {
+fn namespace_scope(
+    parent: &NamespaceScope,
+    event: &quick_xml::events::BytesStart<'_>,
+) -> Result<NamespaceScope, Box<dyn std::error::Error>> {
+    let mut scope = parent.clone();
+    for attribute in event.attributes().with_checks(true) {
+        let attribute = attribute?;
+        let key = String::from_utf8_lossy(attribute.key.as_ref());
+        let value = String::from_utf8_lossy(attribute.value.as_ref()).into_owned();
+        if key == "xmlns" {
+            scope.default = Some(value);
+        } else if let Some(prefix) = key.strip_prefix("xmlns:") {
+            scope.prefixes.insert(prefix.to_owned(), value);
+        }
+    }
+    Ok(scope)
+}
+
+fn inspect_attributes(
+    event: &quick_xml::events::BytesStart<'_>,
+    scope: &NamespaceScope,
+    summary: &mut XmpSummary,
+) -> Result<(), Box<dyn std::error::Error>> {
+    for attribute in event.attributes().with_checks(true) {
+        let attribute = attribute?;
+        let name = String::from_utf8_lossy(attribute.key.as_ref());
+        if name != "xmlns" && !name.starts_with("xmlns:") {
+            inspect_name(&resolve_name(&name, scope, true), summary);
+        }
+    }
+    Ok(())
+}
+
+fn resolve_name(name: &str, scope: &NamespaceScope, attribute: bool) -> QualifiedName {
+    let (prefix, local) = match name.split_once(':') {
+        Some((prefix, local)) => (Some(prefix.to_owned()), local.to_owned()),
+        None => (None, name.to_owned()),
+    };
+    let namespace = match &prefix {
+        Some(prefix) => scope.prefixes.get(prefix).cloned(),
+        None if !attribute => scope.default.clone(),
+        None => None,
+    };
+    QualifiedName {
+        namespace,
+        local: local.to_ascii_lowercase(),
+        prefix,
+    }
+}
+
+fn inspect_name(name: &QualifiedName, summary: &mut XmpSummary) {
+    let namespace = name.namespace.as_deref();
+    match (namespace, name.local.as_str()) {
+        (Some(XMP_NAMESPACE), "rating") => {
             summary.fields.insert(FieldKind::Rating);
         }
-        "description" | "caption" => {
+        (Some(DC_NAMESPACE), "description") => {
             summary.fields.insert(FieldKind::Description);
         }
-        "subject" | "hierarchicalsubject" => {
+        (Some(DC_NAMESPACE), "subject") | (Some(LIGHTROOM_NAMESPACE), "hierarchicalsubject") => {
             summary.fields.insert(FieldKind::Keywords);
         }
-        "label" | "colorlabels" => {
+        (Some(XMP_NAMESPACE), "label") => {
             summary.fields.insert(FieldKind::ColorLabel);
         }
         _ => {}
     }
-    if let Some(prefix) = name.split_once(':').map(|pair| pair.0.to_ascii_lowercase())
-        && matches!(prefix.as_str(), "crs" | "darktable" | "lr" | "snapseed")
+    if standard_field(name) {
+        return;
+    }
+    if let Some(namespace) = namespace
+        && let Some(namespace_name) = adjustment_namespace(namespace)
     {
         summary.fields.insert(FieldKind::Adjustments);
-        summary.namespaces.insert(prefix);
+        summary.namespaces.insert(namespace_name.into());
     }
 }
 
-fn local_name(name: &str) -> &str {
-    name.rsplit_once(':').map(|pair| pair.1).unwrap_or(name)
+fn standard_field(name: &QualifiedName) -> bool {
+    matches!(
+        (name.namespace.as_deref(), name.local.as_str()),
+        (Some(XMP_NAMESPACE), "rating" | "label")
+            | (Some(DC_NAMESPACE), "description" | "subject")
+            | (Some(LIGHTROOM_NAMESPACE), "hierarchicalsubject")
+    )
+}
+
+fn adjustment_namespace(namespace: &str) -> Option<&'static str> {
+    match namespace {
+        CAMERA_RAW_NAMESPACE => Some("crs"),
+        LIGHTROOM_NAMESPACE => Some("lr"),
+        namespace if DARKTABLE_NAMESPACES.contains(&namespace) => Some("darktable"),
+        namespace if SNAPSEED_NAMESPACES.contains(&namespace) => Some("snapseed"),
+        _ => None,
+    }
+}
+
+fn malformed_xmp(message: impl Into<String>) -> Box<dyn std::error::Error> {
+    Box::new(io::Error::new(io::ErrorKind::InvalidData, message.into()))
 }
 
 #[cfg(test)]
@@ -427,5 +544,77 @@ mod tests {
         assert!(result.needs_attention);
         assert_eq!(result.counts.images, 0);
         assert!(crate::render_human(&result).contains("EMPTY"));
+    }
+
+    #[test]
+    fn rdf_description_scaffolding_is_not_a_photographer_description() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("boundary.dng"), b"raw").unwrap();
+        fs::write(
+            dir.path().join("boundary.xmp"),
+            r#"<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"><rdf:RDF><rdf:Description crs:Exposure2012="1.0" /></rdf:RDF></x:xmpmeta>"#,
+        )
+        .unwrap();
+
+        let result = scan(&ScanOptions {
+            root: dir.path().into(),
+            source: Tool::Lightroom,
+            destination: Tool::Immich,
+        })
+        .unwrap();
+
+        assert!(
+            result
+                .assessments
+                .iter()
+                .any(|assessment| assessment.field == FieldKind::Adjustments)
+        );
+        assert!(
+            !result
+                .assessments
+                .iter()
+                .any(|assessment| assessment.field == FieldKind::Description)
+        );
+    }
+
+    #[test]
+    fn malformed_xmp_is_a_parse_warning_and_attention_state() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("broken.dng"), b"raw").unwrap();
+        fs::write(dir.path().join("broken.xmp"), "<x:xmpmeta><unclosed>").unwrap();
+
+        let result = scan(&ScanOptions {
+            root: dir.path().into(),
+            source: Tool::GenericXmp,
+            destination: Tool::GenericXmp,
+        })
+        .unwrap();
+
+        assert!(result.needs_attention);
+        assert_eq!(result.errors.len(), 1);
+        assert!(result.errors[0].message.contains("could not parse XMP"));
+    }
+
+    #[test]
+    fn uppercase_xmp_extension_pairs_with_uppercase_image_extension() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("C.DNG"), b"raw").unwrap();
+        fs::write(
+            dir.path().join("C.XMP"),
+            r#"<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:xmp="http://ns.adobe.com/xap/1.0/"><rdf:RDF><rdf:Description xmp:Rating="5" /></rdf:RDF></x:xmpmeta>"#,
+        )
+        .unwrap();
+
+        let result = scan(&ScanOptions {
+            root: dir.path().into(),
+            source: Tool::GenericXmp,
+            destination: Tool::GenericXmp,
+        })
+        .unwrap();
+
+        assert_eq!(result.counts.paired, 1);
+        assert_eq!(result.counts.images_without_sidecar, 0);
+        assert_eq!(result.counts.orphan_sidecars, 0);
+        assert!(result.errors.is_empty());
     }
 }
