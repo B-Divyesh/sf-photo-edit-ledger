@@ -62,6 +62,9 @@ credentials. No registry publish was attempted.
 - `npm test`: 10 Rust tests and 6 site tests passed.
 - `npm run test:consumer`: `cargo package --locked` verified the 20-file crate;
   a fresh consumer installation passed the installed-binary checks.
+- A fresh GitHub clone passed `npm ci`, `npm test`, and `cargo package --locked`;
+  the public `cargo install --git … --locked` command installed commit
+  `2cd86e4` and its binary returned helpful `--help` output.
 - `npm run test:a11y`: self-built production site; Axe found 0 serious or
   critical findings on `/`, `/privacy/`, and `/terms/`; mobile overflow and
   visible initial keyboard focus passed.
