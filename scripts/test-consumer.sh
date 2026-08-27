@@ -18,4 +18,17 @@ status=$?
 set -e
 test "$status" -eq 1
 rg -q 'invalid value' "$consumer_root/invalid.stderr"
-echo "consumer package install and documented invalid-input exit contract passed"
+
+vendor_fixture="$consumer_root/vendor-xmp"
+mkdir "$vendor_fixture"
+printf 'raw fixture bytes' > "$vendor_fixture/capture.dng"
+printf '%s' '<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:c1="http://www.phaseone.com/"><rdf:RDF><rdf:Description c1:Adjustment="opaque-secret-value" /></rdf:RDF></x:xmpmeta>' > "$vendor_fixture/capture.xmp"
+set +e
+"$binary" scan "$vendor_fixture" --from generic-xmp --to generic-xmp --json > "$consumer_root/vendor.json"
+status=$?
+set -e
+test "$status" -eq 2
+rg -q '"field": "unknown_metadata"' "$consumer_root/vendor.json"
+rg -q 'http://www.phaseone.com/' "$consumer_root/vendor.json"
+! rg -q 'opaque-secret-value' "$consumer_root/vendor.json"
+echo "consumer package install, invalid-input, and opaque-namespace contracts passed"

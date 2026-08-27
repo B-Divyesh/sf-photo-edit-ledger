@@ -39,8 +39,35 @@ try {
   });
   if (!focusVisible) throw new Error('first keyboard target has no visible focus outline');
   if (errors.length) throw new Error(`browser console errors: ${errors.join('; ')}`);
+
+  // A new incognito context gives this regression a fresh service-worker and
+  // Cache Storage profile. The second online reload becomes SW-controlled;
+  // the following offline reload must retain both the module and stylesheet.
+  const offlineContext = await browser.newContext({ viewport: { width: 390, height: 844 } });
+  const offlinePage = await offlineContext.newPage();
+  const offlineErrors = [];
+  offlinePage.on('pageerror', (error) => offlineErrors.push(String(error)));
+  offlinePage.on('console', (message) => {
+    if (message.type() === 'error') offlineErrors.push(message.text());
+  });
+  await offlinePage.goto('http://127.0.0.1:4174/', { waitUntil: 'networkidle' });
+  await offlinePage.evaluate(() => navigator.serviceWorker.ready);
+  await offlinePage.reload({ waitUntil: 'networkidle' });
+  await offlinePage.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
+  await offlineContext.setOffline(true);
+  await offlinePage.reload({ waitUntil: 'domcontentloaded' });
+  await offlinePage.waitForSelector('#route-title');
+  await offlinePage.selectOption('#source', 'darktable');
+  const routeTitle = await offlinePage.locator('#route-title').textContent();
+  if (routeTitle !== 'darktable → Immich (read-only)') {
+    throw new Error(`offline route demo did not stay interactive: ${routeTitle}`);
+  }
+  if (offlineErrors.length) {
+    throw new Error(`offline reload console errors: ${offlineErrors.join('; ')}`);
+  }
+  await offlineContext.close();
   await browser.close();
-  console.log('axe: 0 serious/critical violations on /, /privacy/, and /terms/; mobile overflow and focus checks passed');
+  console.log('axe: 0 serious/critical violations on /, /privacy/, and /terms/; mobile, focus, and fresh-profile offline PWA checks passed');
 } finally {
   server.kill('SIGTERM');
 }

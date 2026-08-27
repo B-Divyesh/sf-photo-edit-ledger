@@ -66,6 +66,7 @@ pub struct Manifest {
 struct XmpSummary {
     fields: BTreeSet<FieldKind>,
     namespaces: BTreeSet<String>,
+    unknown_namespaces: BTreeSet<String>,
 }
 
 #[derive(Clone, Debug, Default)]
@@ -90,6 +91,9 @@ const SNAPSEED_NAMESPACES: &[&str] = &[
     "http://snapseed.com/1.0/",
     "http://ns.google.com/photos/1.0/",
 ];
+const RDF_NAMESPACE: &str = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+const XML_NAMESPACE: &str = "http://www.w3.org/XML/1998/namespace";
+const XMP_META_NAMESPACE: &str = "adobe:ns:meta/";
 
 pub fn scan(options: &ScanOptions) -> io::Result<Manifest> {
     let metadata = fs::metadata(&options.root)?;
@@ -135,7 +139,11 @@ pub fn scan(options: &ScanOptions) -> io::Result<Manifest> {
             match parse_xmp(path) {
                 Ok(summary) => {
                     fields = summary.fields.into_iter().collect();
-                    namespaces = summary.namespaces.into_iter().collect();
+                    namespaces = summary
+                        .namespaces
+                        .into_iter()
+                        .chain(summary.unknown_namespaces)
+                        .collect();
                     for field in &fields {
                         *field_counts.entry(*field).or_default() += 1;
                     }
@@ -469,7 +477,35 @@ fn inspect_name(name: &QualifiedName, summary: &mut XmpSummary) {
     {
         summary.fields.insert(FieldKind::Adjustments);
         summary.namespaces.insert(namespace_name.into());
+    } else if let Some(namespace) = namespace {
+        if !is_recognized_standard_namespace(namespace) {
+            summary.fields.insert(FieldKind::UnknownMetadata);
+            // Namespace identifiers identify the XMP vocabulary only. Never
+            // inspect or serialize the attribute/text value in that vocabulary.
+            summary.unknown_namespaces.insert(namespace.into());
+        }
+    } else if name.prefix.is_some() {
+        // quick-xml is intentionally non-validating. An undeclared prefix is
+        // also unsafe to call portable, but do not echo the opaque field name.
+        summary.fields.insert(FieldKind::UnknownMetadata);
+        summary
+            .unknown_namespaces
+            .insert("unresolved XMP namespace".into());
     }
+}
+
+fn is_recognized_standard_namespace(namespace: &str) -> bool {
+    matches!(
+        namespace,
+        DC_NAMESPACE | XMP_NAMESPACE | LIGHTROOM_NAMESPACE | CAMERA_RAW_NAMESPACE | RDF_NAMESPACE
+            | XML_NAMESPACE | XMP_META_NAMESPACE
+    ) || DARKTABLE_NAMESPACES.contains(&namespace)
+        || SNAPSEED_NAMESPACES.contains(&namespace)
+        // Adobe's published XMP schemas use this registry prefix. Specific
+        // develop schemas above are still classified as opaque adjustments.
+        || namespace.starts_with("http://ns.adobe.com/")
+        || namespace.starts_with("http://iptc.org/std/")
+        || namespace.starts_with("http://ns.useplus.org/")
 }
 
 fn standard_field(name: &QualifiedName) -> bool {
@@ -616,5 +652,35 @@ mod tests {
         assert_eq!(result.counts.images_without_sidecar, 0);
         assert_eq!(result.counts.orphan_sidecars, 0);
         assert!(result.errors.is_empty());
+    }
+
+    #[test]
+    fn unrecognized_xmp_namespace_is_unknown_without_its_opaque_value() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("capture.dng"), b"raw").unwrap();
+        fs::write(
+            dir.path().join("capture.xmp"),
+            r#"<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:c1="http://www.phaseone.com/"><rdf:RDF><rdf:Description c1:Adjustment="opaque-secret-value" /></rdf:RDF></x:xmpmeta>"#,
+        )
+        .unwrap();
+
+        let result = scan(&ScanOptions {
+            root: dir.path().into(),
+            source: Tool::GenericXmp,
+            destination: Tool::GenericXmp,
+        })
+        .unwrap();
+
+        assert!(result.needs_attention);
+        assert!(result.assessments.iter().any(|assessment| {
+            assessment.field == FieldKind::UnknownMetadata
+                && assessment.capability == Capability::Unknown
+        }));
+        assert_eq!(
+            result.assets[0].opaque_namespaces,
+            vec!["http://www.phaseone.com/"]
+        );
+        let json = serde_json::to_string(&result).unwrap();
+        assert!(!json.contains("opaque-secret-value"));
     }
 }

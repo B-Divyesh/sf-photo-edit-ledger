@@ -3,6 +3,8 @@
 //! Most callers should use [`scan`] with a [`ScanOptions`] value, then serialize
 //! the returned [`Manifest`] or render it with [`render_human`]. Scans open files
 //! read-only and never attempt to interpret proprietary adjustment values.
+//! Unrecognized XMP vocabularies are reported as unknown by namespace, never
+//! by their opaque values.
 
 mod profile;
 mod scan;

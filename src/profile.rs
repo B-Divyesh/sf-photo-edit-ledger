@@ -54,6 +54,7 @@ pub enum FieldKind {
     Keywords,
     ColorLabel,
     Adjustments,
+    UnknownMetadata,
 }
 
 impl FieldKind {
@@ -64,6 +65,7 @@ impl FieldKind {
             Self::Keywords => "keywords",
             Self::ColorLabel => "color label",
             Self::Adjustments => "edit adjustments",
+            Self::UnknownMetadata => "unrecognized metadata",
         }
     }
 }
@@ -105,7 +107,7 @@ pub struct Profile {
 impl Profile {
     pub fn assess(self, field: FieldKind, namespaces: &[String]) -> (Capability, String) {
         use Capability::{Lossy, Portable, Unknown};
-        use FieldKind::{Adjustments, ColorLabel, Description, Keywords, Rating};
+        use FieldKind::{Adjustments, ColorLabel, Description, Keywords, Rating, UnknownMetadata};
         let result = match self.tool {
             Tool::Lightroom => match field {
                 Rating | Description | Keywords | ColorLabel => {
@@ -125,6 +127,10 @@ impl Profile {
                     Unknown,
                     "foreign adjustment namespace is preserved as opaque data",
                 ),
+                UnknownMetadata => (
+                    Unknown,
+                    "unrecognized XMP namespace is kept opaque and has no declared mapping",
+                ),
             },
             Tool::Darktable => match field {
                 Rating | Description | Keywords | ColorLabel => {
@@ -135,6 +141,10 @@ impl Profile {
                     "darktable history stack stays native to this route",
                 ),
                 Adjustments => (Unknown, "foreign adjustment namespace is not translated"),
+                UnknownMetadata => (
+                    Unknown,
+                    "unrecognized XMP namespace has no declared mapping",
+                ),
             },
             Tool::Immich => match field {
                 Rating | Description | Keywords => {
@@ -148,6 +158,10 @@ impl Profile {
                     Lossy,
                     "develop recipes are not rendered or translated by Immich",
                 ),
+                UnknownMetadata => (
+                    Unknown,
+                    "unrecognized XMP namespace has no declared mapping",
+                ),
             },
             Tool::ImmichReadonly => match field {
                 Rating | Description | Keywords | ColorLabel => (
@@ -157,6 +171,10 @@ impl Profile {
                 Adjustments => (
                     Lossy,
                     "develop recipes are neither applied nor writable in a read-only library",
+                ),
+                UnknownMetadata => (
+                    Unknown,
+                    "unrecognized XMP namespace has no declared mapping",
                 ),
             },
             Tool::Snapseed => match field {
@@ -168,6 +186,10 @@ impl Profile {
                     Lossy,
                     "another editor's non-destructive recipe is not reproduced",
                 ),
+                UnknownMetadata => (
+                    Unknown,
+                    "unrecognized XMP namespace has no declared mapping",
+                ),
             },
             Tool::GenericXmp => match field {
                 Rating | Description | Keywords | ColorLabel => {
@@ -176,6 +198,10 @@ impl Profile {
                 Adjustments => (
                     Unknown,
                     "proprietary namespace is preserved but cannot be interpreted",
+                ),
+                UnknownMetadata => (
+                    Unknown,
+                    "unrecognized XMP namespace is opaque and has no declared mapping",
                 ),
             },
         };

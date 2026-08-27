@@ -59,7 +59,9 @@ stdout, diagnostics to stderr. JSON output has a versioned `schema_version`.
 Supported built-in profiles are `lightroom`, `darktable`, `immich`,
 `immich-readonly`, `snapseed`, and `generic-xmp`. Sidecar Ledger recognizes
 XMP ratings, descriptions, labels, keywords, and tool-specific adjustment
-namespaces while keeping opaque adjustment values out of the report.
+namespaces while keeping opaque adjustment values out of the report. Any
+unrecognized metadata namespace is reported as `unknown` and returns exit 2;
+the report names the vocabulary but never prints its opaque values.
 
 ## Example
 
@@ -77,12 +79,16 @@ classifications, JSON compatibility, errors, and the no-mutation guarantee.
 ```sh
 npm install
 npm test
+npm run install:browser
+npm run test:a11y
 npm run build
 ```
 
 `npm test` runs Rust tests plus browser-site tests. `npm run build` produces the
 release binary, packages the crate, and builds the static site into
 `dist/site/` (with `index.html` at that root). Use `npm run dev` for the site.
+`npm run install:browser` explicitly downloads the Chromium binary used by the
+accessibility and offline-PWA check, so that check works from a clean clone.
 
 ## Privacy and licensing
 

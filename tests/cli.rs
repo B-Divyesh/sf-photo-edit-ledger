@@ -97,3 +97,35 @@ fn invalid_profile_is_invalid_input_exit_one_as_documented() {
     assert_eq!(output.status.code(), Some(1));
     assert!(String::from_utf8_lossy(&output.stderr).contains("invalid value"));
 }
+
+#[test]
+fn proprietary_xmp_namespace_is_unknown_and_exits_two_without_opaque_values() {
+    let output = binary()
+        .args([
+            "scan",
+            "tests/fixtures/proprietary",
+            "--from",
+            "generic-xmp",
+            "--to",
+            "generic-xmp",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(2));
+    let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert_eq!(json["needs_attention"], true);
+    assert!(
+        json["assessments"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| { item["field"] == "unknown_metadata" && item["capability"] == "unknown" })
+    );
+    assert_eq!(
+        json["assets"][0]["opaque_namespaces"][0],
+        "http://www.phaseone.com/"
+    );
+    assert!(!String::from_utf8_lossy(&output.stdout).contains("opaque-secret-value"));
+}
