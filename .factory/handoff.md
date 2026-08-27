@@ -86,6 +86,7 @@ credentials. No registry publish was attempted.
 - The only optional website data is the Pro license token and cached daily
   verification result in local storage; photo metadata never reaches the
   billing endpoint.
-- Static deployment target: `https://photo-edit-ledger.sociobot.in` on Azure
-  Static Web Apps Standard. Deployment and live-site verification follow this
-  handoff.
+- Deployed to `https://photo-edit-ledger.sociobot.in` on Azure Static Web Apps
+  Standard. Live `verify-url.sh` passed: HTTPS 200, 1.10 s browser load, no
+  console errors, title/lang/one H1/main/image-alt checks passed; the deployed
+  source contains the Live API checkout URL.
