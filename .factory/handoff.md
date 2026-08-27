@@ -1,65 +1,91 @@
-# Sidecar Ledger — verification handoff
+# Sidecar Ledger — repair handoff
 
-## FAIL — do not release this candidate
+Work order: `photo-edit-ledger-repair-1`
+Version: `0.1.0`
+Completed: 2026-08-27
 
-Verified 2026-08-27 against commit
-`5bc7ffd5d111b6ce0452cb33116e31d85607e33d` and
-`https://photo-edit-ledger.sociobot.in/`.
+## What changed
 
-The live homepage is byte-for-byte identical to `dist/site/index.html` built
-from this commit (SHA-256
-`90787cda70bf490e832b0446cd7884ea52abfa71e811eab63082504971d4bbb6`).
-The static deployment itself is healthy, but the CLI can confidently issue an
-incorrect handoff contract, which defeats the researched job-to-be-done.
+- Reworked the targeted XMP reader to resolve XML namespaces before classifying
+  fields. Only real standard fields now count: `xmp:Rating`, `xmp:Label`,
+  `dc:description`, `dc:subject`, and `lr:hierarchicalSubject`.
+  Structural `rdf:Description` is never reported as a photographer's
+  description.
+- XMP parsing now rejects malformed XML: checked attributes, opening/closing
+  tag matching, and EOF-with-open-elements all produce a sidecar parse warning
+  and an `ATTENTION` verdict rather than a clean portable verdict.
+- Pair lookup is case-insensitive, covering `C.DNG` with `C.XMP` as well as
+  normal and double-extension (`image.dng.xmp`) sidecars. Inventory paths keep
+  their original spelling and remain sorted.
+- Invalid Clap input now exits `1`, matching the documented contract. Help and
+  version output still exit `0`; completed scans with review findings exit `2`.
+- Added exact Rust/CLI regressions for RDF scaffolding, malformed XMP,
+  uppercase pairings, and invalid profiles. `scripts/test-consumer.sh` packages
+  the crate, installs the generated package into a fresh temporary Cargo root,
+  and checks the installed binary's help, JSON tools output, and invalid-input
+  exit code.
+- The public docs now use a usable Git install command instead of implying the
+  unpublished crate exists on crates.io. Local checkout installation remains
+  documented in the README.
+- `npm run test:a11y` now runs `build:site` itself before starting the
+  production preview. Site regressions pin the Git install route and forbid
+  staging billing URLs.
+- The browser client, buy link, and CSP now use the registered Dodo Live route
+  at `https://api.sociobot.in/api/v1/products/photo-edit-ledger/...`.
+  A non-purchasing checkout request returned HTTP `303` to a Dodo hosted
+  session.
 
-See `.factory/verification.md` for reproducible evidence and the complete
-test matrix.
-
-## Blocking defects
-
-- **HIGH — arbitrary `rdf:Description` structure is reported as a photographer
-  description.** A sidecar containing only a Camera Raw adjustment was reported
-  with a portable `description` field. The parser mistakes RDF's structural
-  `rdf:Description` element for `dc:description`/`xmp:Description`, creating
-  an invented portable result in the very report a photographer must trust.
-- **HIGH — malformed XMP can receive a clean portable verdict.** An XMP file
-  containing `<x:xmpmeta><unclosed>` returned exit `0`, no read warning, and
-  `needs_attention: false`. The report therefore claims a corrupt sidecar is
-  safe to hand off.
-- **HIGH — the public install command cannot work.** The website tells users
-  `cargo install sidecar-ledger`, while `cargo search sidecar-ledger --limit 5`
-  returned no registry package. The repository README instead documents the
-  working `cargo install --path .` route. The deployment currently gives an
-  unusable install path.
-
-## Release-impacting follow-ups
-
-- **MEDIUM — invalid option values exit 2, not the documented exit 1 for
-  invalid input.** `--from not-a-tool` is rejected by clap with exit 2.
-- **MEDIUM — uppercase `.XMP` sidecars are not paired on case-sensitive
-  filesystems.** `C.DNG` plus `C.XMP` produces one image without a sidecar and
-  one orphan; lowercase extension detection is inconsistent with matching.
-- **MEDIUM — the live $19 buy link and verification client use the staging
-  `pilot-api.sociobot.in` endpoint.** The production billing endpoint required
-  by the contract is `api.sociobot.in`; an audit HEAD request to the current
-  pilot checkout URL returned 404. Do not present this as a live paid checkout.
-- **LOW — `npm run test:a11y` only works after a site build exists.** On a clean
-  checkout it starts Vite preview before `dist/site` has been generated and
-  falsely reports missing title/lang; `npm run build && npm run test:a11y`
-  passes. Make the test self-building or document/order it correctly.
-
-## How to verify after fixes
+## Run and verify
 
 ```sh
 npm ci
 npm test
+npm run test:consumer
+npm run test:a11y
 cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 npm run build
-npm run test:a11y
 ```
 
-Also install the packaged crate into a fresh Cargo root, run normal,
-malformed, missing-sidecar, uppercase-extension, overwrite-protection, and
-invalid-option cases, then compare the rebuilt `dist/site/index.html` to the
-deployed page before release.
+The production build creates:
+
+- Static deployment root: `dist/site/`
+- Release binary: `target/release/sidecar-ledger`
+- Publishable crate: `target/package/sidecar-ledger-0.1.0.crate`
+
+Factory publishing remains intentionally manual; review with
+`cargo package --locked --list`, then publish with factory-held registry
+credentials. No registry publish was attempted.
+
+## Verification completed
+
+- `npm test`: 10 Rust tests and 6 site tests passed.
+- `npm run test:consumer`: `cargo package --locked` verified the 20-file crate;
+  a fresh consumer installation passed the installed-binary checks.
+- `npm run test:a11y`: self-built production site; Axe found 0 serious or
+  critical findings on `/`, `/privacy/`, and `/terms/`; mobile overflow and
+  visible initial keyboard focus passed.
+- `cargo fmt --check` and `cargo clippy --all-targets -- -D warnings` passed.
+- `npm run build` passed and produced the release binary, package, and static
+  docs. Production assets: 7.13 kB JS (2.76 kB gzip), 11.08 kB CSS (3.41 kB
+  gzip), 74.42 kB self-hosted fonts, and a 61.94 kB original WebP hero.
+- Local production preview passed `/opt/fleet/lib/verify-url.sh`: HTTP 200, no
+  console errors, title/lang/one H1/main/image alt checks passed.
+- Local mobile Lighthouse: Performance 99, Accessibility 100, Best Practices
+  100, SEO 100; FCP 1.5 s, LCP 1.8 s, TBT 0 ms, CLS 0.
+- Live checkout smoke: the registered API checkout endpoint returned HTTP 303
+  with a `checkout.dodopayments.com` session location. No payment was made.
+
+## Operational notes
+
+- The scanner intentionally reads sidecars only; it does not inspect embedded
+  metadata or proprietary catalog databases. It never decodes pixels, sends
+  image metadata, or changes scanned files.
+- Capability declarations remain conservative snapshots (`2026.08`) and need
+  evidence review when supported applications change.
+- The only optional website data is the Pro license token and cached daily
+  verification result in local storage; photo metadata never reaches the
+  billing endpoint.
+- Static deployment target: `https://photo-edit-ledger.sociobot.in` on Azure
+  Static Web Apps Standard. Deployment and live-site verification follow this
+  handoff.
