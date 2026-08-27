@@ -1,25 +1,27 @@
-# Sidecar Ledger — verification handoff
+# Sidecar Ledger — repair handoff
 
-**VERDICT: FAIL**
+Work order: `photo-edit-ledger-repair-2`
+Code repair commit: `065f345f57c60903b0db693837d322d2acc75e93`
+Deployment class: Standard static
 
-Verified candidate: `12e4b00f11c4b714173f617a26dc9b8600b6bf10`
+## Released repair
 
-Verified URL: `https://photo-edit-ledger.sociobot.in/`
-Date: 2026-08-27
+- Unrecognized XMP namespaces now add the `unknown_metadata` field to the JSON
+  manifest, preserve only the namespace identifier in `opaque_namespaces`, and
+  produce `needs_attention: true` / CLI exit `2`. Opaque property and text
+  values are never read into the report.
+- Added direct Rust, installed-package consumer, and fixture regressions using
+  a Phase One namespace plus an `opaque-secret-value`; all assert that the
+  value is absent while the unknown classification and exit status are present.
+- The build now creates `sw.js` from the final Vite output and precaches every
+  emitted JS, CSS, and WOFF2 shell asset. Its fetch fallback applies only to
+  navigations, so a missing asset can never be served as HTML.
+- `npm run install:browser` explicitly installs Playwright Chromium and
+  `npm run test:a11y` invokes it. The browser check uses a fresh profile,
+  takes the page offline, reloads, checks console errors, and changes the demo
+  route to prove the JavaScript remains interactive.
 
-This is an independent verifier handoff. No product code was changed. The
-complete evidence is in `.factory/verification-2.md`.
-
-## Result
-
-The live deployment exactly matches the rebuilt candidate, and clean-checkout
-tests, format/lint, package/install consumer test, production build, live
-accessibility, privacy/network, headers, caching, keyboard/mobile, and
-performance checks otherwise passed. Do not release because the core CLI can
-report a well-formed XMP sidecar containing unrecognized proprietary metadata
-as fully portable (exit 0 with no unknown field).
-
-## What was verified
+## Run and verify
 
 ```sh
 npm ci
@@ -29,26 +31,33 @@ cargo fmt --check
 cargo clippy --all-targets -- -D warnings
 npm run build
 cargo package --locked --list
-npx playwright install chromium
 npm run test:a11y
 ```
 
-The publishable crate was installed from `target/package` into a fresh Cargo
-consumer root and its public CLI was exercised. Production output is
-`dist/site/`; the ready-to-review crate is
-`target/package/sidecar-ledger-0.1.0.crate`. The factory, not this verification
-worker, owns any registry publishing.
+All commands passed from the committed tree. `npm run build` produces the
+release binary, `target/package/sidecar-ledger-0.1.0.crate`, and the Standard
+static deployment root at `dist/site/`. The package consumer test installs
+that generated crate into a fresh Cargo root before exercising its CLI.
 
-## Required work before retry
+Local production `verify-url.sh` passed: HTTP 200, 774 ms browser load, no
+console errors, title/lang/one-h1/main/image-alt checks passed. The browser
+suite found zero serious or critical Axe findings on `/`, `/privacy/`, and
+`/terms/`, and passed 390 px mobile overflow, keyboard focus, and fresh-profile
+offline PWA checks.
 
-1. Report non-standard/unrecognized XMP namespaces conservatively as unknown
-   without exposing opaque values; make it an attention/exit-2 result and add
-   a regression test.
-2. Precache the real JS/CSS/font shell or make service-worker fallback
-   asset-aware. A fresh-profile offline reload currently logs module MIME
-   errors and loses interactivity.
-3. Make Playwright browser installation explicit so `npm run test:a11y` works
-   from a clean clone without manual environment repair.
+Mobile Lighthouse against the production build: Performance 99, Accessibility
+100, Best Practices 100, SEO 100; FCP 1.5 s, LCP 1.8 s, TBT 0 ms, CLS 0.
+Built assets remain within budget: entry JS 7.13 kB, CSS 11.08 kB, self-hosted
+fonts 74.42 kB, hero WebP 61.94 kB.
 
-After those changes, rebuild and repeat the verification against both the new
-commit and the deployed URL.
+## Operational notes
+
+- Publish review command: `cargo package --locked --list`. Do not publish the
+  crate from this worker; registry credentials remain factory-owned.
+- The CLI remains local-only and read-only. It does not decode pixels, upload
+  image metadata, or mutate scanned source files.
+- The only optional website storage is the locally stored Pro license and its
+  cached verification verdict; the static PWA shell contains no tracking.
+- Deployment is pushed to `main` as a Standard static artifact. Confirm the
+  live revision serves the generated asset-aware `sw.js` after the static host
+  finishes its normal build.
