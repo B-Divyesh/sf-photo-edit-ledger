@@ -1,7 +1,8 @@
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use sidecar_ledger::{ScanOptions, Tool, render_human, scan};
-use std::fs;
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -77,14 +78,18 @@ fn run(cli: Cli) -> Result<ExitCode, Box<dyn std::error::Error>> {
                 render_human(&manifest)
             };
             if let Some(path) = output {
-                if path.exists() {
-                    return Err(format!(
-                        "refusing to overwrite existing report: {}",
-                        path.display()
-                    )
-                    .into());
-                }
-                fs::write(&path, report)?;
+                let mut file = OpenOptions::new()
+                    .write(true)
+                    .create_new(true)
+                    .open(&path)
+                    .map_err(|error| {
+                        if error.kind() == std::io::ErrorKind::AlreadyExists {
+                            format!("refusing to overwrite existing report: {}", path.display())
+                        } else {
+                            format!("could not create report {}: {error}", path.display())
+                        }
+                    })?;
+                file.write_all(report.as_bytes())?;
                 eprintln!("Wrote {} (source archive unchanged)", path.display());
             } else {
                 print!("{report}");

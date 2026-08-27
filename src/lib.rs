@@ -34,19 +34,22 @@ pub fn render_human(manifest: &Manifest) -> String {
         return out;
     }
 
-    out.push_str("FIELD             VERDICT    SEEN  CONTRACT\n");
-    out.push_str("----------------  ---------  ----  ---------------------------------------\n");
+    out.push_str("FIELD             SEEN  SOURCE     DEST        RESULT\n");
+    out.push_str("----------------  ----  ---------  ----------  ---------\n");
     for item in &manifest.assessments {
         out.push_str(&format!(
-            "{:<16}  {:<9}  {:>4}  {}\n",
+            "{:<16}  {:>4}  {:<9}  {:<10}  {}\n",
             item.field.label(),
-            item.capability.label(),
             item.seen_in,
-            item.reason
+            item.source_capability.label(),
+            item.destination_capability.label(),
+            item.capability.label(),
         ));
+        out.push_str(&format!("                      ↳ {}\n", item.reason));
     }
     if manifest.assessments.is_empty() {
-        out.push_str("metadata fields   UNKNOWN       0  No recognized sidecar fields found.\n");
+        out.push_str("metadata fields      0  UNKNOWN    UNKNOWN     UNKNOWN\n");
+        out.push_str("                      ↳ No recognized sidecar fields found.\n");
     }
 
     if !manifest.errors.is_empty() {

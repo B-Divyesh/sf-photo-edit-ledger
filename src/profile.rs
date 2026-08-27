@@ -111,10 +111,16 @@ impl Profile {
                 Rating | Description | Keywords | ColorLabel => {
                     (Portable, "read and written through standard XMP")
                 }
-                Adjustments if namespaces.iter().any(|n| n == "crs") => (
-                    Portable,
-                    "Camera Raw adjustment block stays native to this route",
-                ),
+                Adjustments
+                    if namespaces
+                        .iter()
+                        .all(|n| matches!(n.as_str(), "crs" | "lr")) =>
+                {
+                    (
+                        Portable,
+                        "Camera Raw adjustment block stays native to this route",
+                    )
+                }
                 Adjustments => (
                     Unknown,
                     "foreign adjustment namespace is preserved as opaque data",
@@ -124,7 +130,7 @@ impl Profile {
                 Rating | Description | Keywords | ColorLabel => {
                     (Portable, "mapped through standard XMP fields")
                 }
-                Adjustments if namespaces.iter().any(|n| n == "darktable") => (
+                Adjustments if namespaces.iter().all(|n| n == "darktable") => (
                     Portable,
                     "darktable history stack stays native to this route",
                 ),

@@ -366,11 +366,11 @@ fn inspect_name(name: &str, summary: &mut XmpSummary) {
         }
         _ => {}
     }
-    if let Some(prefix) = name.split_once(':').map(|pair| pair.0.to_ascii_lowercase()) {
-        if matches!(prefix.as_str(), "crs" | "darktable" | "lr" | "snapseed") {
-            summary.fields.insert(FieldKind::Adjustments);
-            summary.namespaces.insert(prefix);
-        }
+    if let Some(prefix) = name.split_once(':').map(|pair| pair.0.to_ascii_lowercase())
+        && matches!(prefix.as_str(), "crs" | "darktable" | "lr" | "snapseed")
+    {
+        summary.fields.insert(FieldKind::Adjustments);
+        summary.namespaces.insert(prefix);
     }
 }
 
