@@ -1,0 +1,13 @@
+{
+  "slug": "photo-edit-ledger",
+  "title": "Sidecar Ledger",
+  "artifact_class": "cli",
+  "job": "Inventory photographs and XMP sidecars, then explain which ratings, descriptions, keywords, and edits survive a handoff between tools.",
+  "constraints": [
+    "Operate locally and never upload images or metadata",
+    "Treat proprietary adjustments as opaque",
+    "Never mutate source files during a scan",
+    "Offer machine-readable output"
+  ],
+  "source": "Factory researched opportunity supplied in work order photo-edit-ledger-build-1"
+}
