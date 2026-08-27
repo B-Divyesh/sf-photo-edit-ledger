@@ -58,6 +58,7 @@ fonts 74.42 kB, hero WebP 61.94 kB.
   image metadata, or mutate scanned source files.
 - The only optional website storage is the locally stored Pro license and its
   cached verification verdict; the static PWA shell contains no tracking.
-- Deployment is pushed to `main` as a Standard static artifact. Confirm the
-  live revision serves the generated asset-aware `sw.js` after the static host
-  finishes its normal build.
+- Deployed as Standard static to `https://photo-edit-ledger.sociobot.in/`.
+  The live host serves the generated asset-aware worker (`sidecar-ledger-shell-
+  a45qdk`), and a live `verify-url.sh` check passed: HTTPS 200, 930 ms browser
+  load, no console errors, and title/lang/one-h1/main/image-alt checks passed.
