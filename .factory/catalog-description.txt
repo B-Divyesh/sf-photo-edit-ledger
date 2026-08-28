@@ -1,1 +1,1 @@
-Check photo metadata before moving an archive between tools.
+Check which photo metadata survives when you move an archive between tools.

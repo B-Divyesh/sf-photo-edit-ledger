@@ -23,9 +23,11 @@ pub fn render_human(manifest: &Manifest) -> String {
         manifest.capability_version
     ));
     out.push_str(&format!(
-        "Inventory: {} images, {} sidecars, {} paired, {} orphaned\n\n",
+        "Inventory: {} {}, {} {}, {} paired, {} orphaned\n\n",
         manifest.counts.images,
+        count_label(manifest.counts.images, "image", "images"),
         manifest.counts.sidecars,
+        count_label(manifest.counts.sidecars, "sidecar", "sidecars"),
         manifest.counts.paired,
         manifest.counts.orphan_sidecars
     ));
@@ -73,4 +75,8 @@ pub fn render_human(manifest: &Manifest) -> String {
         }
     ));
     out
+}
+
+fn count_label<'a>(count: usize, singular: &'a str, plural: &'a str) -> &'a str {
+    if count == 1 { singular } else { plural }
 }

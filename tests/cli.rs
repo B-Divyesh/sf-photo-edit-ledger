@@ -176,7 +176,7 @@ fn bundled_demo_copies_the_real_sample_to_a_temporary_folder_and_runs_the_scanne
     assert_eq!(output.status.code(), Some(2));
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stdout.contains("Inventory: 2 images, 1 sidecars, 1 paired"));
+    assert!(stdout.contains("Inventory: 2 images, 1 sidecar, 1 paired, 0 orphaned"));
     assert!(stdout.contains("Verdict: ATTENTION"));
     let report = stderr
         .lines()

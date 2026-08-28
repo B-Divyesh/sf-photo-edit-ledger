@@ -46,6 +46,15 @@ try {
   if (!focusVisible) throw new Error('first keyboard target has no visible focus outline');
   if (errors.length) throw new Error(`browser console errors: ${errors.join('; ')}`);
 
+  const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const desktopPage = await desktopContext.newPage();
+  await desktopPage.goto('http://127.0.0.1:4174/', { waitUntil: 'networkidle' });
+  for (const selector of ['.action-note', '.trust-list']) {
+    const box = await desktopPage.locator(selector).boundingBox();
+    if (!box || box.y + box.height > 900) throw new Error(`${selector} falls below the 1440×900 first screen`);
+  }
+  await desktopContext.close();
+
   await page.goto('http://127.0.0.1:4174/privacy/', { waitUntil: 'networkidle' });
   if (await page.evaluate(() => document.activeElement?.tagName) !== 'H1') throw new Error('route navigation did not focus its h1');
   await page.goto('http://127.0.0.1:4174/?demo=1', { waitUntil: 'networkidle' });
@@ -78,7 +87,7 @@ try {
   }
   await offlineContext.close();
   await browser.close();
-  console.log('axe: 0 serious/critical violations on all routes; mobile, focus, demo redirect, and fresh-profile offline PWA checks passed');
+  console.log('axe: 0 serious/critical violations on all routes; mobile, desktop first-screen, focus, demo redirect, and fresh-profile offline PWA checks passed');
 } finally {
   server.kill('SIGTERM');
 }

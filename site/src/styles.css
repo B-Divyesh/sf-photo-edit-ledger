@@ -55,13 +55,13 @@ button { color: inherit; }
 .site-header nav, footer nav { display: flex; align-items: center; gap: 28px; }
 .site-header nav a, footer nav a { padding-block: 12px; color: var(--slate); font-weight: 600; text-decoration: none; }
 .site-header nav a:hover, footer nav a:hover { color: var(--graphite); text-decoration: underline; }
-.hero { min-height: 700px; display: grid; grid-template-columns: minmax(0, .86fr) minmax(440px, 1.14fr); align-items: center; gap: 56px; padding-block: 72px 108px; }
+.hero { min-height: 700px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(440px, 1fr); align-items: center; gap: 48px; padding-block: 72px 108px; }
 .hero-copy { position: relative; z-index: 1; }
 .eyebrow { margin: 0 0 16px; color: var(--moraine); font: 600 13px/1.4 var(--mono); letter-spacing: .075em; text-transform: uppercase; }
 .status-dot { display: inline-block; width: 9px; height: 9px; margin-right: 8px; border-radius: 50%; background: var(--lichen); box-shadow: 0 0 0 4px #dbe9e3; }
 h1, h2, h3, h4, p { margin-top: 0; }
 h1, h2, h3, h4 { font-family: var(--mono); letter-spacing: -.035em; }
-h1 { max-width: 10ch; margin-bottom: 24px; font-size: clamp(3rem, 6.5vw, 5rem); line-height: .98; }
+h1 { max-width: 12ch; margin-bottom: 24px; font-size: clamp(3rem, 5.6vw, 4.5rem); line-height: .98; }
 h2 { margin-bottom: 20px; font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.05; }
 h3 { font-size: 1.25rem; line-height: 1.25; }
 .hero-lead { max-width: 61ch; margin-bottom: 32px; color: var(--slate); font-size: 1.15rem; }

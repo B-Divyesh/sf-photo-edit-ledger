@@ -75,11 +75,14 @@ test('@claim:versioned-json', () => {
 });
 
 test('@claim:demo-cli-real', async () => {
-  const output = cli(['demo']); assert.equal(output.status, 2); assert.match(output.stdout, /Inventory: 2 images, 1 sidecars, 1 paired/);
+  const output = cli(['demo']); assert.equal(output.status, 2);
+  const inventory = output.stdout.split('\n').find((line) => line.startsWith('Inventory:'));
+  assert.equal(inventory, 'Inventory: 2 images, 1 sidecar, 1 paired, 0 orphaned');
   const path = output.stderr.match(/JSON handoff report: (.+)/)?.[1]; assert.ok(path && existsSync(path));
   assert.equal(JSON.parse(await readFile(path, 'utf8')).counts.paired, 1);
   const recording = await readFile(join(root, 'site/public/demo-scan.svg'), 'utf8');
-  for (const line of ['sidecar-ledger demo', 'Inventory: 2 images, 1 sidecar, 1 paired', 'Verdict: ATTENTION', 'exit 2']) assert.match(recording, new RegExp(line));
+  assert.ok(recording.includes(inventory), 'recording repeats the real demo inventory line exactly');
+  for (const line of ['sidecar-ledger demo', 'Verdict: ATTENTION', 'exit 2']) assert.match(recording, new RegExp(line));
 });
 
 test('@claim:opaque-values', () => {
@@ -161,7 +164,12 @@ test('@claim:legal-routes', async () => {
 
 test('@claim:free-mit', async () => {
   const cargo = await readFile(join(root, 'Cargo.toml'), 'utf8'); const license = await readFile(join(root, 'LICENSE'), 'utf8');
-  assert.match(cargo, /^license = "MIT"$/m); assert.match(license, /Permission is hereby granted, free of charge/); assert.equal(cli(['scan', 'tests/fixtures/lightroom-native', '--from', 'lightroom', '--to', 'lightroom', '--json']).status, 0);
+  const [home, terms] = await Promise.all([fetch(base).then((response) => response.text()), fetch(`${base}/terms/`).then((response) => response.text())]);
+  const freeScope = 'The command-line scan and JSON data-file reports stay free under the MIT License.';
+  assert.match(cargo, /^license = "MIT"$/m); assert.match(license, /Permission is hereby granted, free of charge/);
+  assert.match(home, /The command-line program, field results, and JSON data-file report stay free under the MIT License\./);
+  assert.ok(terms.includes(freeScope), 'Terms keeps the tested free scope');
+  assert.equal(cli(['scan', 'tests/fixtures/lightroom-native', '--from', 'lightroom', '--to', 'lightroom', '--json']).status, 0);
 });
 
 test('@claim:build-output', () => { for (const path of ['dist/site/index.html', 'dist/site/demo/index.html', 'target/release/sidecar-ledger', 'target/package/sidecar-ledger-0.1.0.crate']) assert.ok(existsSync(join(root, path)), `${path} exists`); });

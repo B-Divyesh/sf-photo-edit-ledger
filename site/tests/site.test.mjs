@@ -117,3 +117,11 @@ test('production billing and security routes use the approved endpoint', async (
   assert.match(sitemap, /https:\/\/photo-edit-ledger\.sociobot\.in\/demo\//);
   for (const value of [home, client, config]) assert.doesNotMatch(value, /pilot-api\.sociobot\.in/);
 });
+
+test('README identifies the deployable site and command-line artifacts', async () => {
+  const readme = await readFile(new URL('../../README.md', import.meta.url), 'utf8');
+  assert.match(readme, /## Deploy/);
+  assert.match(readme, /Publish `dist\/site\/` as the static site\./);
+  assert.match(readme, /`target\/package\/sidecar-ledger-0\.1\.0\.crate`/);
+  assert.match(readme, /The Param Factory handles deployment infrastructure, DNS, and billing\./);
+});

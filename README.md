@@ -63,6 +63,12 @@ npm run test:consumer
 `npm run build` creates the release binary, package, and static site in
 `dist/site/`. `npm run install:browser` installs Chromium for browser checks.
 
+## Deploy
+
+Run `npm run build` before release. Publish `dist/site/` as the static site.
+Use `target/package/sidecar-ledger-0.1.0.crate` for the command-line release.
+The Param Factory handles deployment infrastructure, DNS, and billing.
+
 ## Privacy and license
 
 The optional website license check runs on the landing page only. It never
