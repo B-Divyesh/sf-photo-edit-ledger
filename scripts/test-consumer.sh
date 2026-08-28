@@ -33,7 +33,9 @@ rg -q 'http://www.phaseone.com/' "$consumer_root/vendor.json"
 ! rg -q 'opaque-secret-value' "$consumer_root/vendor.json"
 
 "$binary" scan tests/fixtures/lightroom-native --from lightroom --to lightroom --json > "$consumer_root/lightroom-native.json"
-! rg -q '"field": "unknown_metadata"' "$consumer_root/lightroom-native.json"
-rg -U -q '"field": "description",\n.*\n.*"capability": "portable"' "$consumer_root/lightroom-native.json"
-rg -U -q '"field": "adjustments",\n.*\n.*"capability": "portable"' "$consumer_root/lightroom-native.json"
+node -e '
+  const manifest = JSON.parse(require("node:fs").readFileSync(process.argv[1], "utf8"));
+  const portable = (field) => manifest.assessments.some((item) => item.field === field && item.capability === "portable");
+  if (manifest.needs_attention || manifest.assessments.some((item) => item.field === "unknown_metadata") || !portable("description") || !portable("adjustments")) process.exit(1);
+' "$consumer_root/lightroom-native.json"
 echo "consumer package install, invalid-input, opaque-namespace, and xml:lang contracts passed"
