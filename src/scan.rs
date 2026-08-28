@@ -441,6 +441,10 @@ fn resolve_name(name: &str, scope: &NamespaceScope, attribute: bool) -> Qualifie
         None => (None, name.to_owned()),
     };
     let namespace = match &prefix {
+        // The XML Namespaces specification predefines `xml`; normal XMP uses
+        // it for structural attributes such as xml:lang without redeclaring
+        // it on every document. It is not an opaque XMP vocabulary.
+        Some(prefix) if prefix == "xml" => Some(XML_NAMESPACE.to_owned()),
         Some(prefix) => scope.prefixes.get(prefix).cloned(),
         None if !attribute => scope.default.clone(),
         None => None,
@@ -720,5 +724,40 @@ mod tests {
                 .unwrap()
                 .contains("opaque-secret-value")
         );
+    }
+
+    #[test]
+    fn xml_lang_is_structural_and_keeps_a_native_lightroom_route_portable() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("alpine.dng"), b"raw").unwrap();
+        fs::write(
+            dir.path().join("alpine.xmp"),
+            r#"<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"><rdf:RDF><rdf:Description crs:Exposure2012="1.0"><dc:description><rdf:Alt><rdf:li xml:lang="x-default">Alpine dawn</rdf:li></rdf:Alt></dc:description></rdf:Description></rdf:RDF></x:xmpmeta>"#,
+        )
+        .unwrap();
+
+        let result = scan(&ScanOptions {
+            root: dir.path().into(),
+            source: Tool::Lightroom,
+            destination: Tool::Lightroom,
+        })
+        .unwrap();
+
+        assert!(!result.needs_attention);
+        assert!(result.errors.is_empty());
+        assert!(
+            !result
+                .assessments
+                .iter()
+                .any(|assessment| assessment.field == FieldKind::UnknownMetadata)
+        );
+        assert!(result.assessments.iter().any(|assessment| {
+            assessment.field == FieldKind::Description
+                && assessment.capability == Capability::Portable
+        }));
+        assert!(result.assessments.iter().any(|assessment| {
+            assessment.field == FieldKind::Adjustments
+                && assessment.capability == Capability::Portable
+        }));
     }
 }

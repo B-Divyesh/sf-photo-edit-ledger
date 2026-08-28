@@ -31,4 +31,9 @@ test "$status" -eq 2
 rg -q '"field": "unknown_metadata"' "$consumer_root/vendor.json"
 rg -q 'http://www.phaseone.com/' "$consumer_root/vendor.json"
 ! rg -q 'opaque-secret-value' "$consumer_root/vendor.json"
-echo "consumer package install, invalid-input, and opaque-namespace contracts passed"
+
+"$binary" scan tests/fixtures/lightroom-native --from lightroom --to lightroom --json > "$consumer_root/lightroom-native.json"
+! rg -q '"field": "unknown_metadata"' "$consumer_root/lightroom-native.json"
+rg -U -q '"field": "description",\n.*\n.*"capability": "portable"' "$consumer_root/lightroom-native.json"
+rg -U -q '"field": "adjustments",\n.*\n.*"capability": "portable"' "$consumer_root/lightroom-native.json"
+echo "consumer package install, invalid-input, opaque-namespace, and xml:lang contracts passed"

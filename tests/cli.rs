@@ -129,3 +129,43 @@ fn proprietary_xmp_namespace_is_unknown_and_exits_two_without_opaque_values() {
     );
     assert!(!String::from_utf8_lossy(&output.stdout).contains("opaque-secret-value"));
 }
+
+#[test]
+fn xml_lang_description_is_portable_on_a_native_lightroom_route() {
+    let output = binary()
+        .args([
+            "scan",
+            "tests/fixtures/lightroom-native",
+            "--from",
+            "lightroom",
+            "--to",
+            "lightroom",
+            "--json",
+        ])
+        .output()
+        .unwrap();
+
+    assert_eq!(output.status.code(), Some(0));
+    let json: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+    assert!(
+        !json["assessments"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["field"] == "unknown_metadata")
+    );
+    assert!(
+        json["assessments"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["field"] == "description" && item["capability"] == "portable")
+    );
+    assert!(
+        json["assessments"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|item| item["field"] == "adjustments" && item["capability"] == "portable")
+    );
+}
