@@ -132,10 +132,7 @@ fn run(cli: Cli) -> Result<ExitCode, Box<dyn std::error::Error>> {
             if json {
                 println!("{}", serde_json::to_string_pretty(&tools)?);
             } else {
-                println!(
-                    "BUILT-IN TOOL PROFILES ({})",
-                    tools[0].profile_version
-                );
+                println!("BUILT-IN TOOL PROFILES ({})", tools[0].profile_version);
                 for tool in tools {
                     println!("{:<18} {}", tool.id, tool.label);
                 }
