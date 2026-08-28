@@ -24,7 +24,7 @@ Deployment: Azure Static Web Apps deployment
 
 ## Verification
 
-From the repaired checkout:
+From a disposable clean clone at /tmp/photo-edit-ledger-clean.ETuJlx:
 
     npm ci
     npm test
