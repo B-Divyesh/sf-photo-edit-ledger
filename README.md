@@ -2,25 +2,19 @@
 
 Sidecar Ledger checks photo metadata before you switch tools.
 
-It inventories a folder and its XMP sidecars. The handoff report marks each
-field as portable, lossy, or unknown.
+It scans a folder and its XMP metadata sidecar files. The handoff report marks
+each field as portable, lossy, or unknown.
 
-The CLI runs locally and does not change source files. It does not upload
-photos or metadata.
+The command-line scan runs locally and does not change source files. It does
+not upload photos or metadata.
 
 ## Install
 
-Install from this public source with a current stable Rust toolchain:
-
-```sh
-cargo install --git https://github.com/B-Divyesh/sf-photo-edit-ledger.git --locked
-sidecar-ledger --help
-```
-
-For a checkout you already have:
+To install from a local checkout, use a current stable Rust toolchain:
 
 ```sh
 cargo install --path . --locked
+sidecar-ledger --help
 ```
 
 ## Try the bundled sample
@@ -32,7 +26,7 @@ sidecar-ledger demo
 ```
 
 The command copies the sample, runs the real scanner, and prints the JSON
-handoff report path. Exit 2 means the sample needs review.
+data-file handoff report path. Exit 2 means the sample needs review.
 
 Open the isolated browser sample at
 `https://photo-edit-ledger.sociobot.in/demo/` or
@@ -67,7 +61,7 @@ npm run test:consumer
 ```
 
 `npm run build` creates the release binary, package, and static site in
-`dist/site/`. `npm run install:browser` downloads Chromium for browser checks.
+`dist/site/`. `npm run install:browser` installs Chromium for browser checks.
 
 ## Privacy and license
 
@@ -75,4 +69,4 @@ The optional website license check runs on the landing page only. It never
 receives photo metadata. Read the [privacy policy](https://photo-edit-ledger.sociobot.in/privacy/)
 and [terms](https://photo-edit-ledger.sociobot.in/terms/).
 
-The CLI and its JSON handoff reports are free under the [MIT License](LICENSE).
+The command-line scan and JSON handoff reports are free under the [MIT License](LICENSE).

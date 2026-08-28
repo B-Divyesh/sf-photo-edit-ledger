@@ -36,10 +36,10 @@ export function assessRoute(sourceId, destinationId) {
 }
 
 export const recipes = {
-  'lightroom:immich': ['Write metadata to XMP in Lightroom.', 'Back up the catalog and originals together.', 'Import a 20-image sample, then compare ratings and captions.', 'Export finished master renders for virtual-copy variants.'],
-  'lightroom:snapseed': ['Keep the Lightroom catalog as adjustment authority.', 'Export a rendered 16-bit TIFF for continued visual editing.', 'Do not expect Camera Raw develop settings to appear in Snapseed.', 'Retain the original DNG and XMP as a pair.'],
-  'darktable:immich': ['Write darktable sidecars before copying.', 'Preserve .xmp files with matching basenames.', 'Render critical history stacks for visual parity.', 'Re-scan the destination folder after transfer.']
-  ,'darktable:snapseed': ['Keep darktable sidecars with each original.', 'Render a TIFF for visual edits before transfer.', 'Test one album in Snapseed.', 'Keep the source archive as the edit record.']
-  ,'immich:lightroom': ['Export a representative folder with sidecars.', 'Keep the Immich library intact until review.', 'Import the sample into Lightroom.', 'Compare captions, keywords, and ratings.']
-  ,'generic-xmp:immich': ['Copy originals and XMP sidecars together.', 'Archive the JSON handoff report.', 'Test one destination album.', 'Keep rendered copies for critical edits.']
+  'lightroom:immich': ['Write metadata to an XMP metadata sidecar in Lightroom.', 'Back up the catalog and original photos together.', 'Import a 20-photo sample, then compare ratings and captions.', 'Export finished master renders for virtual-copy variants.'],
+  'lightroom:snapseed': ['Keep the Lightroom catalog as the edit record.', 'Export a rendered 16-bit TIFF for visual editing.', 'Do not expect Camera Raw photo edit settings in Snapseed.', 'Keep the original DNG and XMP metadata sidecar together.'],
+  'darktable:immich': ['Write darktable sidecars before copying.', 'Keep .xmp files with matching filenames.', 'Render critical history stacks for visual parity.', 'Run a new scan after the transfer.'],
+  'darktable:snapseed': ['Keep darktable sidecars with each original.', 'Render a TIFF for visual edits before transfer.', 'Test one album in Snapseed.', 'Keep the source archive as the edit record.'],
+  'immich:lightroom': ['Export a representative folder with sidecars.', 'Keep the Immich library intact until review.', 'Import the sample into Lightroom.', 'Compare captions, keywords, and ratings.'],
+  'generic-xmp:immich': ['Copy originals and XMP metadata sidecars together.', 'Archive the JSON data file handoff report.', 'Test one destination album.', 'Keep rendered copies for critical edits.']
 };

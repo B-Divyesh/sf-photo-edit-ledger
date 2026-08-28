@@ -8,7 +8,7 @@ use std::process::ExitCode;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Parser)]
-#[command(name = "sidecar-ledger", version, about = "Preflight photo/XMP handoffs without touching your archive", long_about = None)]
+#[command(name = "sidecar-ledger", version, about = "Scan photo metadata sidecars before switching tools", long_about = None)]
 struct Cli {
     #[command(subcommand)]
     command: Command,
@@ -16,7 +16,7 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
-    /// Inventory a folder and assess metadata portability
+    /// Scan a folder and assess which metadata can move
     Scan {
         /// Folder containing images and adjacent .xmp sidecars
         path: PathBuf,
@@ -26,14 +26,14 @@ enum Command {
         /// Destination editor or library
         #[arg(long, value_enum)]
         to: Tool,
-        /// Emit a versioned JSON manifest
+        /// Emit a versioned JSON data-file report
         #[arg(long)]
         json: bool,
         /// Write the report to this new file instead of stdout
         #[arg(long, value_name = "FILE")]
         output: Option<PathBuf>,
     },
-    /// List built-in capability declarations
+    /// List built-in tool profiles
     Tools {
         /// Emit JSON for scripting
         #[arg(long)]
@@ -47,7 +47,7 @@ enum Command {
 struct ToolDescription {
     id: Tool,
     label: &'static str,
-    capability_version: &'static str,
+    profile_version: &'static str,
 }
 
 fn main() -> ExitCode {
@@ -126,15 +126,15 @@ fn run(cli: Cli) -> Result<ExitCode, Box<dyn std::error::Error>> {
             .map(|tool| ToolDescription {
                 id: tool,
                 label: tool.label(),
-                capability_version: tool.profile().version,
+                profile_version: tool.profile().version,
             })
             .collect::<Vec<_>>();
             if json {
                 println!("{}", serde_json::to_string_pretty(&tools)?);
             } else {
                 println!(
-                    "BUILT-IN CAPABILITY DECLARATIONS ({})",
-                    tools[0].capability_version
+                    "BUILT-IN TOOL PROFILES ({})",
+                    tools[0].profile_version
                 );
                 for tool in tools {
                     println!("{:<18} {}", tool.id, tool.label);

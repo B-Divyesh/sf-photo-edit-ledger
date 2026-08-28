@@ -12,12 +12,12 @@ mod scan;
 pub use profile::{Assessment, Capability, FieldKind, Profile, Tool};
 pub use scan::{AssetRecord, Counts, Manifest, ScanError, ScanOptions, scan};
 
-/// Render a compact terminal handoff contract.
+/// Render a compact terminal handoff report.
 pub fn render_human(manifest: &Manifest) -> String {
     let mut out = String::new();
-    out.push_str("SIDECAR LEDGER / HANDOFF CONTRACT\n");
+    out.push_str("SIDECAR LEDGER / HANDOFF REPORT\n");
     out.push_str(&format!(
-        "Route: {} -> {}  |  capability set {}\n",
+        "Route: {} -> {}  |  profile set {}\n",
         manifest.source.label(),
         manifest.destination.label(),
         manifest.capability_version

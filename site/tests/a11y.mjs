@@ -29,6 +29,12 @@ try {
     }
   }
 
+  await page.goto('http://127.0.0.1:4174/demo/', { waitUntil: 'networkidle' });
+  for (const selector of ['#reset-demo', '.demo-banner a', 'header .wordmark', 'footer .wordmark']) {
+    const box = await page.locator(selector).boundingBox();
+    if (!box || box.width < 44 || box.height < 44) throw new Error(`${selector} is smaller than the 44px touch target`);
+  }
+
   await page.goto('http://127.0.0.1:4174/', { waitUntil: 'networkidle' });
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   if (overflow) throw new Error('homepage has horizontal overflow at 390px');

@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config site/vite.config.js",
-    "test": "cargo test --all-targets && node --test site/tests/site.test.mjs && npm run test:claims",
-    "test:claims": "npm run build:cli && npm run package:cli && npm run build:site && node --test site/tests/claims.test.mjs",
+    "test": "cargo test --all-targets && node --test site/tests/site.test.mjs site/tests/copy-audit.test.mjs && npm run test:claims",
+    "test:claims": "npm run build:cli && npm run package:cli && npm run build:site && node site/tests/run-claims.mjs",
     "test:consumer": "bash scripts/test-consumer.sh",
     "install:browser": "playwright install chromium",
     "test:a11y": "npm run install:browser && npm run build:site && node site/tests/a11y.mjs",

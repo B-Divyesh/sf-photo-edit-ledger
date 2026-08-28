@@ -222,7 +222,7 @@ pub fn scan(options: &ScanOptions) -> io::Result<Manifest> {
         recommendations
             .push("Keep the originals and sidecars together during the transfer.".into());
         recommendations
-            .push("Re-run this preflight after import to verify the resulting folder.".into());
+            .push("Run the scan again after import to verify the resulting folder.".into());
     }
     let needs_attention = counts.images == 0
         || counts.images_without_sidecar > 0

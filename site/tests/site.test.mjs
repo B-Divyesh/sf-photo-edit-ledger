@@ -20,12 +20,32 @@ for (const [page, title] of pages) {
     assert.match(html, /<main(?:\s|>)/);
     assert.match(html, /class="skip-link"/);
     assert.match(html, /rel="canonical"/);
+    assert.match(html, /property="og:title"/);
+    assert.match(html, /property="og:description"/);
     assert.match(html, /property="og:image"/);
+    assert.match(html, /property="og:url"/);
     assert.match(html, /name="twitter:card"/);
+    assert.match(html, /name="twitter:title"/);
+    assert.match(html, /name="twitter:description"/);
+    assert.match(html, /name="twitter:image"/);
     assert.match(html, /apple-touch-icon/);
     assert.match(html, /Built by Param Factory · v0\.1\.0/);
   });
 }
+
+test('social card is the declared 1200 by 630 image', async () => {
+  const jpeg = await readFile(new URL('../public/sidecar-ledger-card.jpg', import.meta.url));
+  let offset = 2;
+  while (offset < jpeg.length) {
+    if (jpeg[offset] !== 0xff) { offset += 1; continue; }
+    const marker = jpeg[offset + 1]; const length = jpeg.readUInt16BE(offset + 2);
+    if ([0xc0, 0xc1, 0xc2, 0xc3].includes(marker)) {
+      assert.equal(jpeg.readUInt16BE(offset + 5), 630); assert.equal(jpeg.readUInt16BE(offset + 7), 1200); return;
+    }
+    offset += 2 + length;
+  }
+  assert.fail('JPEG start-of-frame marker not found');
+});
 
 test('landing page puts the sample action and plain wording first', async () => {
   const home = await readFile(new URL('../index.html', import.meta.url), 'utf8');
@@ -74,6 +94,13 @@ test('six distinct migration routes have their own steps', () => {
     assert.ok(Array.isArray(recipes[route]), route);
     assert.equal(recipes[route].length, 4);
   }
+});
+
+test('paid panel exposes an accessible route selector backed by all recipe data', async () => {
+  const [home, client] = await Promise.all([readFile(new URL('../index.html', import.meta.url), 'utf8'), readFile(new URL('../src/main.js', import.meta.url), 'utf8')]);
+  assert.match(home, /<label class="recipe-label" for="recipe-route">Choose a migration route<\/label>/);
+  assert.equal((home.match(/<option value="(?:lightroom|darktable|immich|generic-xmp):/g) || []).length, 6);
+  assert.match(client, /const steps = recipes\[route\]/);
 });
 
 test('production billing and security routes use the approved endpoint', async () => {

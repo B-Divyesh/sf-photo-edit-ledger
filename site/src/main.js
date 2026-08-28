@@ -1,4 +1,5 @@
 import './styles.css';
+import { recipes } from './data.js';
 
 // Keep the catalog-friendly query entry in the isolated demo before any
 // browser storage or optional license logic can run.
@@ -34,10 +35,12 @@ if (new URLSearchParams(location.search).get('demo') === '1') {
   function renderRecipe() {
     const target = document.querySelector('#recipe-content');
     if (!target || document.querySelector('#unlocked-view').hidden) return;
+    const route = document.querySelector('#recipe-route').value;
+    const steps = recipes[route];
     const heading = document.createElement('h4');
-    heading.textContent = 'Start with one representative migration';
+    heading.textContent = `Migration steps: ${document.querySelector('#recipe-route').selectedOptions[0].textContent}`;
     const list = document.createElement('ol');
-    for (const step of ['Create a verified backup of originals and sidecars.', 'Run Sidecar Ledger and archive its JSON handoff report.', 'Move a representative sample before the full archive.', 'Compare field counts and rendered appearance after import.']) {
+    for (const step of steps) {
       const item = document.createElement('li'); item.textContent = step; list.append(item);
     }
     target.replaceChildren(heading, list);
@@ -99,6 +102,7 @@ if (new URLSearchParams(location.search).get('demo') === '1') {
     setUnlocked(false);
     document.querySelector('#license-status').textContent = 'License removed from this browser.';
   });
+  document.querySelector('#recipe-route').addEventListener('change', renderRecipe);
 
   if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js'));
 }

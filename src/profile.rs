@@ -4,7 +4,7 @@ use std::fmt;
 
 pub const CAPABILITY_VERSION: &str = "2026.08";
 
-/// A built-in, versioned application capability declaration.
+/// A built-in, versioned application profile.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, ValueEnum)]
 #[serde(rename_all = "kebab-case")]
 pub enum Tool {
@@ -156,7 +156,7 @@ impl Profile {
                 ),
                 Adjustments => (
                     Lossy,
-                    "develop recipes are not rendered or translated by Immich",
+                    "photo edit settings are not rendered or translated by Immich",
                 ),
                 UnknownMetadata => (
                     Unknown,
@@ -170,7 +170,7 @@ impl Profile {
                 ),
                 Adjustments => (
                     Lossy,
-                    "develop recipes are neither applied nor writable in a read-only library",
+                    "photo edit settings are neither applied nor writable in a read-only library",
                 ),
                 UnknownMetadata => (
                     Unknown,
