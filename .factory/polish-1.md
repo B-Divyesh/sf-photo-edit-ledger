@@ -1,17 +1,19 @@
 # Polish 1 — finding ledger
 
-Candidate repaired: 69f56a66f7147b88650cfd0e1ae77eec577e516d.
+Candidate repaired: `83144687f0101e3a71a5a3ec75f01832daee7fd6`.
 
-Local screenshots: .factory/evidence/local-home-390.png and
-.factory/evidence/local-demo-390.png. Browser evidence comes from npm run
-test:a11y and the tagged claim suite.
+Browser evidence: `.factory/evidence/live-home/screenshot-mobile.png`,
+`.factory/evidence/live-demo/screenshot-mobile.png`, and their adjacent
+`verify.json` files. The live URLs are `/`, `/demo/`, `/privacy/`, `/terms/`,
+and `/not-a-real-route`. `npm run test:a11y` and the 17 tagged claim tests
+were rerun from the clean clone named in the handoff.
 
 | Finding | Change made | Evidence |
 | --- | --- | --- |
 | F-1-1 | Replaced the first action with Try it with sample data and outcome text. | site test landing check; home screenshot |
 | F-1-2 | Added shipped examples, CLI demo, terminal recording, /demo/, and demo docs. | claim demo-cli-real; CLI demo test |
 | F-1-3 | Made /demo/ separate, in-memory, and license-free. | claims demo-isolated and demo-private |
-| F-1-4 | Added claims manifest and tagged sandbox tests. | 18 claims pass |
+| F-1-4 | Added claims manifest and tagged sandbox tests. | 17 claims pass |
 | F-1-5 | Added ceramic 404 page and platform response override. | site 404 config test |
 | F-1-6 | Rewrote hero as a plain handoff-report claim. | claim handoff-report |
 | F-1-7 | Retained local operation only as a tested claim. | claim read-only-local |
@@ -70,6 +72,7 @@ test:a11y and the tagged claim suite.
 | F-1-60 | Each page focuses its h1 and announces route title. | a11y focus check |
 | F-1-61 | Added three-step How it works and privacy/limits section. | site test; home screenshot |
 | F-1-62 | Added /demo/ to sitemap. | production-route site test |
+| C-1 (controller console review) | Replaced the same-origin SVG `<object>` recording with an ordinary `<img>` resource; retained `frame-ancestors 'none'`. | `terminal recording is an image, never a framed same-origin document`; cold live `/` and `/demo/` verify JSON report `errors: []` |
 
 Earlier verification findings (RDF scaffolding, malformed XMP, uppercase
 sidecars, invalid input, XML language metadata, offline shell, and production
