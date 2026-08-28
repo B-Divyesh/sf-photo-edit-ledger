@@ -1,7 +1,7 @@
 # Sidecar Ledger — polish 1 handoff
 
 Repair commit: 69f56a66f7147b88650cfd0e1ae77eec577e516d  
-Evidence commit: f4e71b2f5931d108f62a6542e7fc2dcf6c3340a5  
+Evidence commit: f4e71b268fe0d6a98b11871934517487d2c60ec1  
 Deployment: Azure Static Web Apps deployment
 1da7c30c-2471-4ee0-9e09-7f9e76ec61c7, production.
 
