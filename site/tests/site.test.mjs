@@ -39,6 +39,6 @@ test('public install and billing routes are usable production routes', async () 
   assert.doesNotMatch(home, /cargo install sidecar-ledger/);
   assert.match(home, new RegExp(`${liveApi}/products/photo-edit-ledger/checkout`));
   assert.match(client, new RegExp(`const apiBase = '${liveApi}'`));
-  assert.match(config, /https:\/\/api\.sociobot\.in/);
+  assert.match(config, /connect-src 'self' https:\/\/api\.sociobot\.in/);
   for (const value of [home, client, config]) assert.doesNotMatch(value, /pilot-api\.sociobot\.in/);
 });

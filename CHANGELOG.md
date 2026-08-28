@@ -13,6 +13,8 @@ All notable changes follow Keep a Changelog; versions follow Semantic Versioning
 - Precache the final static shell so offline reloads retain module, stylesheet,
   and self-hosted font assets.
 - Make Chromium installation explicit before browser accessibility checks.
+- Permit same-origin service-worker cache requests in the production CSP, so
+  the offline shell can install on the static host.
 
 ## [0.1.0] - 2026-08-27
 
