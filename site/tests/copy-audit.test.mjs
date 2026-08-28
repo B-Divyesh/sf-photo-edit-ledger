@@ -7,6 +7,7 @@ const audited = [
   'For photographers moving RAW files between tools, it shows which metadata and photo edit settings will survive.',
   'Opens a sample Lightroom → Immich report. Nothing is saved.',
   'Read image filenames and nearby XMP metadata sidecar files.',
+  'Keep the JSON data-file report with the archive before you move it.',
   'The command-line program does not edit photos or upload metadata.',
   'The command-line program, field results, and JSON data-file report stay free under the MIT License.',
   'Sidecar Ledger checks photo metadata before you switch tools.',
@@ -31,4 +32,15 @@ test('copy audit covers public prose with short, plain language', async () => {
     assert.ok(phrase.replace(/[^\p{L}\p{N}]+/gu, ' ').trim().split(/\s+/).length <= 22, `over 22 words: ${phrase}`);
   }
   assert.doesNotMatch(`${home}\n${readme}`, banned);
+});
+
+test('landing expands JSON at its first use', async () => {
+  const home = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const firstJson = home.indexOf('JSON');
+  assert.notEqual(firstJson, -1, 'landing names the JSON data-file report');
+  assert.equal(
+    home.slice(firstJson, firstJson + 'JSON data-file report'.length),
+    'JSON data-file report',
+    'the first landing-page use expands JSON as a data-file report'
+  );
 });

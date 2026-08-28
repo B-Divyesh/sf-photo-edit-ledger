@@ -29,7 +29,7 @@ exceeds 22 words or uses a banned marketing word.
 | Scan a folder, then keep the report | 7 |
 | Read image filenames and nearby XMP metadata sidecar files. | 9 |
 | See portable, lossy, or unknown results. | 6 |
-| Keep JSON with the archive before you move it. | 9 |
+| Keep the JSON data-file report with the archive before you move it. | 12 |
 | Scan filenames and sidecar files without changing them | 8 |
 | Sidecar Ledger reads image filenames and nearby XMP metadata sidecar files. | 10 |
 | It does not change source files. | 6 |
