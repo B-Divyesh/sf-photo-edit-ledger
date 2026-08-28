@@ -478,34 +478,37 @@ fn inspect_name(name: &QualifiedName, summary: &mut XmpSummary) {
         summary.fields.insert(FieldKind::Adjustments);
         summary.namespaces.insert(namespace_name.into());
     } else if let Some(namespace) = namespace {
-        if !is_recognized_standard_namespace(namespace) {
+        if !is_declared_structural_namespace(namespace) {
             summary.fields.insert(FieldKind::UnknownMetadata);
             // Namespace identifiers identify the XMP vocabulary only. Never
             // inspect or serialize the attribute/text value in that vocabulary.
             summary.unknown_namespaces.insert(namespace.into());
         }
-    } else if name.prefix.is_some() {
-        // quick-xml is intentionally non-validating. An undeclared prefix is
-        // also unsafe to call portable, but do not echo the opaque field name.
+    } else {
+        // quick-xml is intentionally non-validating. An undeclared prefix or
+        // unqualified metadata property is also unsafe to call portable, but
+        // do not echo its opaque field name.
         summary.fields.insert(FieldKind::UnknownMetadata);
-        summary
-            .unknown_namespaces
-            .insert("unresolved XMP namespace".into());
+        summary.unknown_namespaces.insert(if name.prefix.is_some() {
+            "unresolved XMP namespace".into()
+        } else {
+            "unqualified XMP metadata".into()
+        });
     }
 }
 
-fn is_recognized_standard_namespace(namespace: &str) -> bool {
+fn is_declared_structural_namespace(namespace: &str) -> bool {
     matches!(
         namespace,
-        DC_NAMESPACE | XMP_NAMESPACE | LIGHTROOM_NAMESPACE | CAMERA_RAW_NAMESPACE | RDF_NAMESPACE
-            | XML_NAMESPACE | XMP_META_NAMESPACE
+        DC_NAMESPACE
+            | XMP_NAMESPACE
+            | LIGHTROOM_NAMESPACE
+            | CAMERA_RAW_NAMESPACE
+            | RDF_NAMESPACE
+            | XML_NAMESPACE
+            | XMP_META_NAMESPACE
     ) || DARKTABLE_NAMESPACES.contains(&namespace)
         || SNAPSEED_NAMESPACES.contains(&namespace)
-        // Adobe's published XMP schemas use this registry prefix. Specific
-        // develop schemas above are still classified as opaque adjustments.
-        || namespace.starts_with("http://ns.adobe.com/")
-        || namespace.starts_with("http://iptc.org/std/")
-        || namespace.starts_with("http://ns.useplus.org/")
 }
 
 fn standard_field(name: &QualifiedName) -> bool {
@@ -542,7 +545,7 @@ mod tests {
         fs::write(dir.path().join("frame.dng"), b"raw").unwrap();
         let xmp = dir.path().join("frame.dng.xmp");
         let mut file = fs::File::create(&xmp).unwrap();
-        write!(file, r#"<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"><rdf:RDF xmlns:rdf="x"><rdf:Description xmp:Rating="5" crs:Exposure2012="1.0" /></rdf:RDF></x:xmpmeta>"#).unwrap();
+        write!(file, r#"<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:crs="http://ns.adobe.com/camera-raw-settings/1.0/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"><rdf:Description xmp:Rating="5" crs:Exposure2012="1.0" /></rdf:RDF></x:xmpmeta>"#).unwrap();
         let before = fs::metadata(&xmp).unwrap().modified().unwrap();
         let result = scan(&ScanOptions {
             root: dir.path().into(),
@@ -682,5 +685,40 @@ mod tests {
         );
         let json = serde_json::to_string(&result).unwrap();
         assert!(!json.contains("opaque-secret-value"));
+    }
+
+    #[test]
+    fn undeclared_vendor_vocabulary_under_adobe_registry_is_not_assumed_portable() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(dir.path().join("capture.dng"), b"raw").unwrap();
+        fs::write(
+            dir.path().join("capture.xmp"),
+            r#"<x:xmpmeta xmlns:x="adobe:ns:meta/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:vendor="http://ns.adobe.com/unregistered-vendor/1.0/"><rdf:RDF><rdf:Description vendor:Recipe="opaque-secret-value" /></rdf:RDF></x:xmpmeta>"#,
+        )
+        .unwrap();
+
+        let result = scan(&ScanOptions {
+            root: dir.path().into(),
+            source: Tool::GenericXmp,
+            destination: Tool::GenericXmp,
+        })
+        .unwrap();
+
+        assert!(result.needs_attention);
+        assert!(
+            result
+                .assessments
+                .iter()
+                .any(|assessment| assessment.field == FieldKind::UnknownMetadata)
+        );
+        assert_eq!(
+            result.assets[0].opaque_namespaces,
+            vec!["http://ns.adobe.com/unregistered-vendor/1.0/"]
+        );
+        assert!(
+            !serde_json::to_string(&result)
+                .unwrap()
+                .contains("opaque-secret-value")
+        );
     }
 }

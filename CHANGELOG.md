@@ -7,7 +7,9 @@ All notable changes follow Keep a Changelog; versions follow Semantic Versioning
 ### Fixed
 
 - Classify unrecognized XMP namespaces as unknown without exposing opaque
-  metadata values, with the documented attention exit status.
+  metadata values, with the documented attention exit status. Do not exempt an
+  otherwise undeclared vocabulary merely because it uses an Adobe/IPTC-style
+  registry URL.
 - Precache the final static shell so offline reloads retain module, stylesheet,
   and self-hosted font assets.
 - Make Chromium installation explicit before browser accessibility checks.
