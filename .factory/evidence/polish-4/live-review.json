@@ -1,0 +1,30 @@
+{
+  "url": "https://photo-edit-ledger.sociobot.in/",
+  "checked_at": "2026-08-28",
+  "desktop_1440x900": {
+    "action_note_and_trust_list_within_viewport": true,
+    "console_errors": []
+  },
+  "demo": {
+    "one_click_from_home": true,
+    "banner_reset_and_exit": true,
+    "seeded_real_storage_preserved": true,
+    "same_origin_requests_only": true,
+    "query_demo_redirect": "https://photo-edit-ledger.sociobot.in/demo/"
+  },
+  "routes": {
+    "/privacy/": 200,
+    "/terms/": 200,
+    "/404/": 200,
+    "/not-a-real-route": 404
+  },
+  "terms_free_scope": true,
+  "recording_matches_cli_inventory": true,
+  "axe_serious_or_critical": {
+    "/": 0,
+    "/demo/": 0,
+    "/privacy/": 0,
+    "/terms/": 0,
+    "/404/": 0
+  }
+}

@@ -1,49 +1,79 @@
-# Sidecar Ledger — review 4 handoff
+# Sidecar Ledger — polish 4 handoff
 
-## Work completed
+## Delivered
 
-Performed an adversarial first-read review of the live Sidecar Ledger site and
-the repository at `4d2281e4d6653b309d198a865a0cd7a5f0a737cf`. The full report
-is `.factory/review-4.md`. No product code was modified.
+Product repairs are in `98016b29f3132d65405c7565bef4f0e2f7694657` and
+`b31044c5585774f2e78238455f8d5fc3ce17160e`.
 
-The verdict is **FAIL** with four findings and no blocking finding:
+- Rebalanced the desktop hero so the action explanation and all three facts
+  stay inside a 1440×900 first screen; the browser suite now enforces that
+  bound.
+- Made the CLI inventory grammar singular-aware and made the demo claim prove
+  that the self-hosted terminal recording repeats the real CLI inventory line.
+- Reduced the Terms free-feature sentence to its tested MIT scope and extended
+  that claim test to inspect the rendered Terms page.
+- Added practical README deployment instructions for `dist/site/` and the
+  packaged crate, without assigning infrastructure, DNS, or billing work to
+  repository users.
+- Preloaded the two self-hosted fonts on Home, removing the Lighthouse layout
+  shift introduced by the larger first-screen measure.
+- Rebuilt the complete copy audit and updated the verb-first catalog sentence.
 
-- F-4-1: desktop first screen pushes the action note and required facts below
-  900 px.
-- F-4-2: Terms contains an unlisted claim that privacy controls and
-  accessibility features stay free.
-- F-4-3: the real CLI prints “1 sidecars” while its landing recording prints
-  “1 sidecar.”
-- F-4-4: README has no deployment guidance.
+The static site was deployed by the factory work-order deployer as Azure Static
+Web Apps deployment `fda9b751-4453-4b4a-a8d6-536a3fd914bd`:
+<https://photo-edit-ledger.sociobot.in/>.
 
-## Verification performed
+## Exact verification
 
-From the clean clone `/tmp/photo-edit-ledger-review4-clean`:
+Fresh clone: `/tmp/photo-edit-ledger-polish4-final.4tFqoC/repo` at
+`b31044c5585774f2e78238455f8d5fc3ce17160e`.
 
-- `npm ci`
-- every one of the 20 exact `test` commands in `.factory/claims.json`; each
-  selected one tagged test and passed
-- `npm run build`
-- `npm run test:a11y`
-- `npm run test:consumer`
-- `cargo fmt --check`
-- `cargo clippy --all-targets -- -D warnings`
+All passed from that clone:
 
-The build produced `dist/site/`, the release binary, and the packaged crate.
-The browser suite reported zero serious/critical Axe violations. The release
-CLI demo was also run from a fresh temp directory and exited 2 after creating
-its isolated sample and JSON report.
+```sh
+npm ci
+cargo fmt --check
+cargo clippy --all-targets -- -D warnings
+npm test
+npm run build
+npm run test:a11y
+npm run test:consumer
+```
 
-Live Chromium checks covered 390×844 and 1440×900 cold loads, one-click demo,
-seeded storage isolation, Reset, `?demo=1`, same-origin request interception,
-offline reload and interaction, route metadata, designed 404, browser Back and
-focus, touch targets, console output, and all links. All passed except the
-desktop first-screen placement recorded in F-4-1. Earlier findings F-1-1
-through F-1-62, F-2-1 through F-2-11, and F-3-1 were individually rechecked;
-none is reopened.
+`npm test` passed 16 Rust tests, 17 site/copy tests, and all 20 claim tests.
+Every exact `test` command in `.factory/claims.json` was then run separately
+and passed: `handoff-report`, `read-only-local`, `cli-private`,
+`versioned-json`, `demo-cli-real`, `opaque-values`, `exit-codes`, `profiles`,
+`demo-isolated`, `demo-private`, `offline-demo`, `license-scope`,
+`paid-price`, `merchant-refund`, `migration-steps`, `legal-routes`,
+`free-mit`, `build-output`, `checkout-install`, and `browser-install`.
 
-## Next steps
+`npm run build` produced `dist/site/`, `target/release/sidecar-ledger`, and
+`target/package/sidecar-ledger-0.1.0.crate`. The consumer check installed that
+packaged crate into a fresh prefix and exercised its public binary.
 
-Resolve F-4-1 through F-4-4, then repeat the entire review checklist. The
-current build remains buildable and all automated gates pass, but the review
-cannot pass while any finding remains.
+Local mobile Lighthouse: 100 Performance, 100 Accessibility, 100 Best
+Practices, 100 SEO; LCP 1.83 s and CLS 0. See
+`.factory/evidence/polish-4/lighthouse-summary.json`.
+
+## Live recheck
+
+Cold production Home and Demo checks report no console errors, `lang=en`, one
+`h1`, a main landmark, and complete image/button labels:
+
+- `.factory/evidence/polish-4/live-home/verify.json`
+- `.factory/evidence/polish-4/live-demo/verify.json`
+- `.factory/evidence/polish-4/live-review.json`
+
+The final cold browser review verified the 1440×900 hero bound, one-click
+Demo, banner/Reset/Start for real controls, seeded-storage isolation,
+same-origin demo requests, `?demo=1` → `/demo/`, Back focus, Terms free scope,
+exact recording inventory line, legal routes, and an unknown-route HTTP 404.
+Live Axe had zero serious or critical violations on Home, Demo, Privacy, Terms,
+and 404. Screenshots are in `.factory/evidence/polish-4/live-home/` and
+`.factory/evidence/polish-4/live-demo/`.
+
+## Handoff status
+
+No known gaps or open review findings. The ready-to-publish CLI artifact is
+`target/package/sidecar-ledger-0.1.0.crate`; do not publish it from this worker.
