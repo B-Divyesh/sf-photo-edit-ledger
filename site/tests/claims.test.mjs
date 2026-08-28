@@ -67,6 +67,10 @@ test('@claim:demo-cli-real', async () => {
   const path = output.stderr.match(/JSON handoff report: (.+)/)?.[1];
   assert.ok(path && existsSync(path));
   assert.equal(JSON.parse(await readFile(path, 'utf8')).counts.paired, 1);
+  const recording = await readFile(join(root, 'site/public/demo-scan.svg'), 'utf8');
+  for (const line of ['sidecar-ledger demo', 'Inventory: 2 images, 1 sidecar, 1 paired', 'Verdict: ATTENTION', 'exit 2']) {
+    assert.match(recording, new RegExp(line));
+  }
 });
 
 test('@claim:opaque-values', () => {

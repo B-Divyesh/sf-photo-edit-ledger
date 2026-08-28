@@ -1,1 +1,1 @@
-Check photo metadata before switching editing tools.
+Check which photo metadata survives before switching editing tools.

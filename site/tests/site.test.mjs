@@ -36,6 +36,16 @@ test('landing page puts the sample action and plain wording first', async () => 
   assert.match(home, /Keep your originals and test a small copy/);
 });
 
+test('terminal recording is an image, never a framed same-origin document', async () => {
+  const [home, config] = await Promise.all([
+    readFile(new URL('../index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../public/staticwebapp.config.json', import.meta.url), 'utf8')
+  ]);
+  assert.match(home, /<img class="recording-image" src="\/demo-scan\.svg"/);
+  assert.doesNotMatch(home, /<(?:iframe|object|embed)\b/i);
+  assert.match(config, /frame-ancestors 'none'/);
+});
+
 test('demo has its required isolated controls and no license panel', async () => {
   const demo = await readFile(new URL('../demo/index.html', import.meta.url), 'utf8');
   assert.match(demo, /Demo — sample data, nothing is saved/);

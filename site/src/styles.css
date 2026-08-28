@@ -130,7 +130,7 @@ select, input { width: 100%; min-height: 50px; padding: 11px 14px; border: 1px s
 .recorded-demo li { margin-block: 7px; }
 .recording { grid-column: 1 / -1; padding-top: 36px; border-top: 1px solid var(--hairline); }
 .recording h3 { margin-bottom: 16px; }
-.recording object { display: block; width: 100%; height: 260px; border: 1px solid #2e3935; border-radius: 12px 12px 18px 10px; background: #19231f; }
+.recording-image { display: block; width: 100%; border: 1px solid #2e3935; border-radius: 12px 12px 18px 10px; background: #19231f; }
 .recording p:last-child { margin: 16px 0 0; color: var(--slate); }
 .how-section, .privacy-section { padding-block: 104px; }
 .how-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; margin: 48px 0 0; padding: 0; list-style: none; }
@@ -204,7 +204,6 @@ footer { padding-block: 48px; border-top: 1px solid var(--hairline); }
   .restore-form > div { grid-template-columns: 1fr; }
   .footer-inner { align-items: flex-start; flex-direction: column; }
   .demo-banner { align-items: flex-start; flex-direction: column; margin-bottom: 40px; }
-  .recording object { height: 220px; }
   footer nav { flex-wrap: wrap; gap: 12px 24px; }
 }
 
