@@ -1,10 +1,12 @@
 # Polish 2 — finding ledger
 
-Candidate repaired from `5f443c6aef0e8dc824cfd18ab0801758d723d85b`.
+Candidate repaired from `5f443c6aef0e8dc824cfd18ab0801758d723d85b` in
+`ed823145eeff3b4f01b60d92b593dd75781dc9d9`.
 Local evidence: `npm test`, `npm run build`, `npm run test:a11y`, and every
-command in `.factory/claims.json` pass. Browser evidence is recorded by the
-Playwright claim and accessibility tests; live evidence is added in the handoff
-after deployment.
+command in `.factory/claims.json` pass from
+`/tmp/photo-edit-ledger-polish2.2xYaBp`. Live evidence is
+`.factory/evidence/polish-2/live/verify.json`, the adjacent mobile screenshots,
+and `lighthouse.json` (100 performance, 100 accessibility) after deployment.
 
 | Finding | Change made | Evidence |
 | --- | --- | --- |
