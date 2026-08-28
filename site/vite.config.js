@@ -17,11 +17,16 @@ function serviceWorker() {
       const shell = [
         '/',
         '/index.html',
+        '/demo/',
+        '/demo/index.html',
         '/privacy/',
         '/privacy/index.html',
         '/terms/',
         '/terms/index.html',
+        '/404/index.html',
         '/ceramic-sidecars.webp',
+        '/sidecar-ledger-card.jpg',
+        '/apple-touch-icon.png',
         '/favicon.svg',
         ...assets
       ];
@@ -71,8 +76,10 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(import.meta.dirname, 'index.html'),
+        demo: resolve(import.meta.dirname, 'demo/index.html'),
         privacy: resolve(import.meta.dirname, 'privacy/index.html'),
-        terms: resolve(import.meta.dirname, 'terms/index.html')
+        terms: resolve(import.meta.dirname, 'terms/index.html'),
+        notFound: resolve(import.meta.dirname, '404/index.html')
       }
     }
   }

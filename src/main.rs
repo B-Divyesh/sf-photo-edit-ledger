@@ -5,6 +5,7 @@ use std::fs::OpenOptions;
 use std::io::Write;
 use std::path::PathBuf;
 use std::process::ExitCode;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Parser)]
 #[command(name = "sidecar-ledger", version, about = "Preflight photo/XMP handoffs without touching your archive", long_about = None)]
@@ -38,6 +39,8 @@ enum Command {
         #[arg(long)]
         json: bool,
     },
+    /// Run the bundled Lightroom-to-Immich sample in a temporary folder
+    Demo,
 }
 
 #[derive(Serialize)]
@@ -139,5 +142,50 @@ fn run(cli: Cli) -> Result<ExitCode, Box<dyn std::error::Error>> {
             }
             Ok(ExitCode::SUCCESS)
         }
+        Command::Demo => run_demo(),
     }
+}
+
+/// The demo deliberately uses the same scanner and report writer as a normal
+/// scan. The only special work is materialising the shipped, read-only sample
+/// in a new temporary directory, so it cannot ever point at a visitor's
+/// archive.
+fn run_demo() -> Result<ExitCode, Box<dyn std::error::Error>> {
+    let stamp = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
+    let root = std::env::temp_dir().join(format!(
+        "sidecar-ledger-demo-{}-{stamp}",
+        std::process::id()
+    ));
+    std::fs::create_dir_all(&root)?;
+    std::fs::write(
+        root.join("alpine-dawn.dng"),
+        include_bytes!("../examples/lightroom-to-immich/alpine-dawn.dng"),
+    )?;
+    std::fs::write(
+        root.join("alpine-dawn.xmp"),
+        include_bytes!("../examples/lightroom-to-immich/alpine-dawn.xmp"),
+    )?;
+    std::fs::write(
+        root.join("unpaired-nef.nef"),
+        include_bytes!("../examples/lightroom-to-immich/unpaired-nef.nef"),
+    )?;
+
+    let manifest = scan(&ScanOptions {
+        root: root.clone(),
+        source: Tool::Lightroom,
+        destination: Tool::Immich,
+    })?;
+    let report_path = root.join("lightroom-to-immich.json");
+    std::fs::write(
+        &report_path,
+        serde_json::to_string_pretty(&manifest)? + "\n",
+    )?;
+    print!("{}", render_human(&manifest));
+    eprintln!("Sample folder: {}", root.display());
+    eprintln!("JSON handoff report: {}", report_path.display());
+    Ok(if manifest.needs_attention {
+        ExitCode::from(2)
+    } else {
+        ExitCode::SUCCESS
+    })
 }

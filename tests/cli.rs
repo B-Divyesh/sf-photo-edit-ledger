@@ -169,3 +169,22 @@ fn xml_lang_description_is_portable_on_a_native_lightroom_route() {
             .any(|item| item["field"] == "adjustments" && item["capability"] == "portable")
     );
 }
+
+#[test]
+fn bundled_demo_copies_the_real_sample_to_a_temporary_folder_and_runs_the_scanner() {
+    let output = binary().arg("demo").output().unwrap();
+    assert_eq!(output.status.code(), Some(2));
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    assert!(stdout.contains("Inventory: 2 images, 1 sidecars, 1 paired"));
+    assert!(stdout.contains("Verdict: ATTENTION"));
+    let report = stderr
+        .lines()
+        .find_map(|line| line.strip_prefix("JSON handoff report: "))
+        .expect("demo reports its JSON path");
+    let json: serde_json::Value = serde_json::from_slice(&std::fs::read(report).unwrap()).unwrap();
+    assert_eq!(json["counts"]["images"], 2);
+    assert_eq!(json["counts"]["paired"], 1);
+    assert_eq!(json["source"], "lightroom");
+    assert_eq!(json["destination"], "immich");
+}

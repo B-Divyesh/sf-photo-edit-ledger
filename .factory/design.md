@@ -77,3 +77,8 @@ clarifies the product's core relationship without pretending to be UI.
 
 All interface icons are hand-drawn inline SVG strokes and disclosed as
 decorative where the adjacent label already carries meaning.
+
+site/public/sidecar-ledger-card.jpg and site/public/apple-touch-icon.png are
+local crops of the original generated ceramic still-life above. They provide
+the required social card and touch icon without introducing another visual
+language. No new model asset was generated.

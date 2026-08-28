@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title desc">
+  <title id="title">Sidecar Ledger bundled sample terminal recording</title>
+  <desc id="desc">A terminal transcript runs sidecar-ledger demo, inventories two images and one sidecar, then prints the temporary JSON report path and exit code two.</desc>
+  <rect width="1200" height="520" fill="#19231f"/>
+  <rect x="0" y="0" width="1200" height="58" fill="#222f2a"/>
+  <circle cx="34" cy="29" r="7" fill="#8fd0b6"/><circle cx="58" cy="29" r="7" fill="#aebbb6"/><circle cx="82" cy="29" r="7" fill="#aebbb6"/>
+  <text x="110" y="36" fill="#aebbb6" font-family="ui-monospace, monospace" font-size="18">bundled sample · local shell</text>
+  <g font-family="ui-monospace, monospace" font-size="23"><text x="44" y="112" fill="#8fd0b6">$</text><text x="70" y="112" fill="#e9f0ed">sidecar-ledger demo</text><text x="44" y="160" fill="#e9f0ed">SIDECAR LEDGER / HANDOFF REPORT</text><text x="44" y="202" fill="#bfcac6">Route: Lightroom → Immich</text><text x="44" y="244" fill="#bfcac6">Inventory: 2 images, 1 sidecar, 1 paired, 0 orphaned</text><text x="44" y="286" fill="#f4c993">COLOR LABEL       UNKNOWN</text><text x="44" y="328" fill="#f2a9a0">PHOTO EDIT SETTINGS LOSSY</text><text x="44" y="382" fill="#e9f0ed">Verdict: ATTENTION. Source files were not changed.</text><text x="44" y="432" fill="#aebbb6">JSON handoff report: /tmp/sidecar-ledger-demo-…/lightroom-to-immich.json</text><text x="44" y="476" fill="#aebbb6">exit 2 — review the missing sidecar before moving.</text></g>
+</svg>

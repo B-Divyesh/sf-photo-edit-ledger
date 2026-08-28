@@ -20,7 +20,7 @@ try {
   page.on('pageerror', (error) => errors.push(String(error)));
   page.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()); });
 
-  for (const path of ['/', '/privacy/', '/terms/']) {
+  for (const path of ['/', '/demo/', '/privacy/', '/terms/', '/404/']) {
     await page.goto(`http://127.0.0.1:4174${path}`, { waitUntil: 'networkidle' });
     const results = await new AxeBuilder({ page }).analyze();
     const serious = results.violations.filter((item) => ['serious', 'critical'].includes(item.impact));
@@ -40,6 +40,11 @@ try {
   if (!focusVisible) throw new Error('first keyboard target has no visible focus outline');
   if (errors.length) throw new Error(`browser console errors: ${errors.join('; ')}`);
 
+  await page.goto('http://127.0.0.1:4174/privacy/', { waitUntil: 'networkidle' });
+  if (await page.evaluate(() => document.activeElement?.tagName) !== 'H1') throw new Error('route navigation did not focus its h1');
+  await page.goto('http://127.0.0.1:4174/?demo=1', { waitUntil: 'networkidle' });
+  if (!page.url().endsWith('/demo/')) throw new Error('?demo=1 did not enter the isolated demo route');
+
   // A new incognito context gives this regression a fresh service-worker and
   // Cache Storage profile. The second online reload becomes SW-controlled;
   // the following offline reload must retain both the module and stylesheet.
@@ -50,7 +55,7 @@ try {
   offlinePage.on('console', (message) => {
     if (message.type() === 'error') offlineErrors.push(message.text());
   });
-  await offlinePage.goto('http://127.0.0.1:4174/', { waitUntil: 'networkidle' });
+  await offlinePage.goto('http://127.0.0.1:4174/demo/', { waitUntil: 'networkidle' });
   await offlinePage.evaluate(() => navigator.serviceWorker.ready);
   await offlinePage.reload({ waitUntil: 'networkidle' });
   await offlinePage.waitForFunction(() => Boolean(navigator.serviceWorker.controller));
@@ -59,7 +64,7 @@ try {
   await offlinePage.waitForSelector('#route-title');
   await offlinePage.selectOption('#source', 'darktable');
   const routeTitle = await offlinePage.locator('#route-title').textContent();
-  if (routeTitle !== 'darktable → Immich (read-only)') {
+  if (routeTitle !== 'darktable → Immich') {
     throw new Error(`offline route demo did not stay interactive: ${routeTitle}`);
   }
   if (offlineErrors.length) {
@@ -67,7 +72,7 @@ try {
   }
   await offlineContext.close();
   await browser.close();
-  console.log('axe: 0 serious/critical violations on /, /privacy/, and /terms/; mobile, focus, and fresh-profile offline PWA checks passed');
+  console.log('axe: 0 serious/critical violations on all routes; mobile, focus, demo redirect, and fresh-profile offline PWA checks passed');
 } finally {
   server.kill('SIGTERM');
 }
