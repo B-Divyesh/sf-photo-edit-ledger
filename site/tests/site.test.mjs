@@ -49,6 +49,8 @@ test('social card is the declared 1200 by 630 image', async () => {
 
 test('landing page puts the sample action and plain wording first', async () => {
   const home = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(home, /<link rel="preload" href="\/src\/fonts\/inter-latin\.woff2" as="font"/);
+  assert.match(home, /<link rel="preload" href="\/src\/fonts\/azeret-mono-latin\.woff2" as="font"/);
   assert.match(home, /Check photo metadata before switching tools/);
   assert.match(home, /Try it with sample data/);
   assert.match(home, /Opens a sample Lightroom → Immich report\. Nothing is saved\./);
